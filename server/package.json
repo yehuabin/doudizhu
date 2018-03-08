@@ -1,0 +1,22 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "doudizhu_server",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yehuabin/doudizhu.git"
+  },
+  "author": "yehuabin",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/yehuabin/doudizhu/issues"
+  },
+  "homepage": "https://github.com/yehuabin/doudizhu#readme",
+  "dependencies": {
+    "socket.io": "^2.0.4"
+  }
+}
