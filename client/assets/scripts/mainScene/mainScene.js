@@ -1,23 +1,29 @@
-import global from '../global'
+var socket=require('./controller/socketController');
+       
 
 cc.Class({
     extends: cc.Component,
 
     properties: {
-
+      
     },
 
     // LIFE-CYCLE CALLBACKS:
 
     onLoad() {
-        global.socket.init();
 
+        socket.init();
+       
     },
-    buttonClick(event, customData) {
-        console.log('custom data =  ' + customData);
+    onClick:function(event, customData) {
+        //console.log('custom data =  ' + customData);
         switch (customData) {
-            case 'wxlogin':
-                global.socket.login(global.tianba.playerData.nickName);
+            case 'create_room':
+              cc.director.loadScene("gameScene");
+                break;
+            case 'sendMsg':
+              
+                //  global.socket.login(global.tianba.playerData.nickName);
                 break;
 
             default:
