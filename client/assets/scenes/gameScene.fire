@@ -189,7 +189,7 @@
   },
   {
     "__type__": "cc.Node",
-    "_name": "opt",
+    "_name": "btn_nodes",
     "_objFlags": 0,
     "_parent": {
       "__id__": 2
@@ -288,8 +288,8 @@
     "_scaleY": 1,
     "_position": {
       "__type__": "cc.Vec2",
-      "x": 324,
-      "y": -20
+      "x": 851,
+      "y": -1
     },
     "_skewX": 0,
     "_skewY": 0,
@@ -473,7 +473,7 @@
     },
     "component": "gameScene",
     "handler": "onClick",
-    "customEventData": "play"
+    "customEventData": "push"
   },
   {
     "__type__": "cc.Canvas",
