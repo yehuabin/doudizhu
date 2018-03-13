@@ -31,4 +31,16 @@ var Player = function (nickname, socket) {
 Player.prototype.ready=function () {
     this.state="ready";
 }
+Player.prototype.pushCard=function (pushCards) {
+    for (let i = 0; i < pushCards.length; i++) {
+        const pushCard = pushCards[i];
+        for (let j = 0; j < this.cards.length; j++) {
+            const card = this.cards[j];
+            if(card.equal(pushCard)){
+                this.cards.splice(j,1);
+                break;
+            }
+        }
+    }
+}
 module.exports = Player;

@@ -3,6 +3,7 @@ var Room = function () {
     this.roomId = "111111";
     this.seatNos = [[0, 0], [1, 0], [2, 0], [3, 0]];
     this.players = [];
+    this.turn={};
     this.state="wait";//playing,over
     this.maxPlayerNo = 4;
     this.isFull = function () {
@@ -17,6 +18,13 @@ Room.prototype.leaveRoom = function (socket) {
 }
 Room.prototype.playing = function () {
     this.state="playing";
+}
+Room.prototype.setTurn = function (seatNo,isWin,preCards) {
+    this.turn={
+        seatNo:seatNo,//出牌座位号
+        isWin:isWin,//是否是大出牌
+        preCards:preCards//上家出的牌
+    };
 }
 Room.prototype.getPlayer = function (socket) {
     var index = this.players.map(function (e) { return e.getSocket(); }).indexOf(socket);

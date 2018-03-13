@@ -9,4 +9,7 @@ var Card=function(no,shape){
     var index=global_const.card_shapes.indexOf(this.shape);
     return index+this.no*10;
  };
+ Card.prototype.equal=function(other){
+    return this.shape==other.shape&&this.no==other.shape;
+ };
  module.exports=Card;
