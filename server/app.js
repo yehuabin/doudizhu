@@ -3,11 +3,14 @@ var global_const = require('./data/global_const');
 var Room = require('./data/Room');
 var Player = require('./data/Player');
 var Card = require('./data/Card');
+var tools = require('./utility/tools');
 var roomList = [];
+var playerList = [];
 const app = socket('3000', { wsEngine: 'ws' });
 
 app.on('connection', function (socket) {
-    console.log(` connection `);
+    playerList.push(socket);
+    console.log(` connection players : ${playerList.length} , rooms : ${roomList.length}`);
     //     socket.on("login",function(user){
     //         console.log("login success");
     //         console.log("----"+user);
@@ -22,7 +25,7 @@ app.on('connection', function (socket) {
         var player = new Player(user.nickname, socket);
         player.isCreator = true;
 
-        room.players.push(player);
+        room.addPlayer(player);
         roomList.push(room);
         socket.roomId = room.roomId;
         socket.nickname = user.nickname;
@@ -43,8 +46,8 @@ app.on('connection', function (socket) {
         if (!room) {
             err = "房间不存在：" + joinRoomData.roomId;
         }
-        else if(room.isFull()){
-            err = "房间已经满了" ;
+        else if (room.isFull()) {
+            err = "房间已经满了";
         }
         else {
             var player = new Player(joinRoomData.nickname, socket);
@@ -57,11 +60,11 @@ app.on('connection', function (socket) {
                     break;
                 }
             }
-
+            ret.roomId = room.roomId;
             ret.nickname = player.nickname;
             ret.seatNo = player.seatNo;
             ret.player = player;
-            room.players.push(player);
+            room.addPlayer(player);
             socket.roomId = room.roomId;
             socket.nickname = joinRoomData.nickname;
 
@@ -84,6 +87,61 @@ app.on('connection', function (socket) {
             player.getSocket().emit(global_const.join_room, null, room.getPlayer(socket));
         });
 
+    });
+    socket.on(global_const.ready_game, function () {
+        var room = getPlayerRoom();
+        console.log(`ready_game:` + socket.nickname);
+         var player= room.getPlayer(socket);
+         player.ready();
+
+        room.players.forEach(p => {
+            p.getSocket().emit(global_const.ready_game, null, player);
+        });
+        //全都准备好就进行发牌
+        if(room.isAllReady()){
+            room.playing();
+
+            var cardList = [];
+            for (let k = 0; k < 3; k++) {
+                for (let i = 0; i < 15; i++) {
+                    for (let j = 0; j < 4; j++) {
+                        if (i >= 13) {
+                            if (j > 0) {
+                                break;
+                            }
+                            else {
+                                cardList.push(new Card(global_const.card_nos[i], ""));
+                            }
+                        }
+                        else {
+                            cardList.push(new Card(global_const.card_nos[i], global_const.card_shapes[j]));
+                        }
+                    }
+                }
+            }
+    
+            var randomCardList = [];
+            while (cardList.length > 0) {
+                var index = Math.floor((Math.random() * cardList.length));
+                randomCardList.push(cardList[index]);
+                cardList.splice(index, 1);
+            }
+    
+            var count = randomCardList.length;
+            while (count > 0) {
+                let i = count % 4;
+                room.players[i].addCard(randomCardList[0]);
+                randomCardList.splice(0, 1);
+                count--;
+    
+            }
+    
+            console.log(`start_game ` + room.players[0].cards.length + JSON.stringify(room.players[0].cards));
+            // socket.emit(global_const.start_game,null,room.players[0].cards);
+            room.players.forEach(player => {
+                player.getSocket().emit(global_const.start_game, null, player.cards);
+            });
+        }
     });
 
     var getPlayerRoom = function (roomId) {
@@ -144,12 +202,19 @@ app.on('connection', function (socket) {
         if (room) {
 
             room.leaveRoom(socket);
-
-            room.players.forEach(player => {
-                player.getSocket().emit(global_const.leave_room, null, socket.nickname);
-            });
+            if (room.players.length == 0) {
+                tools.splice(roomList, room);
+            }
+            else {
+                room.players.forEach(player => {
+                    player.getSocket().emit(global_const.leave_room, null, socket.nickname);
+                });
+            }
         }
-        console.log(`disconnect`);
+
+        tools.splice(playerList, socket);
+        console.log(` disconnect  players : ${playerList.length} , rooms : ${roomList.length}`);
+
     });
 
 });

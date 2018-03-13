@@ -1,5 +1,6 @@
 const global_const={
     start_game:"start_game",
+    ready_game:"ready_game",
     create_room:"create_room",
     //create_room_success:"create_room_success",
     apply_join_room:"apply_join_room",

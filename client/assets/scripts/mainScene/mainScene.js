@@ -1,54 +1,72 @@
 var socket = require('../controller/socketController');
 var global_const = require('../data/global_const');
+global.socket = socket;
+global.const = global_const;
 cc.Class({
     extends: cc.Component,
 
     properties: {
-
+        dialogPrefab: cc.Prefab,
+        inputRoomNoPrefab: cc.Prefab
     },
 
     // LIFE-CYCLE CALLBACKS:
 
     onLoad() {
 
-        socket.init();
+        global.socket.init();
+        // this.dialog = cc.instantiate(this.dialogPrefab);
+        // this.dialog.parent = this.node;
 
-        socket.on(global_const.create_room, function (err, ret) {
+
+        global.socket.on(global.const.create_room, function (err, ret) {
             if (!err) {
-                global_player.roomId = ret.roomId;
-                global_player.seatNo = ret.seatNo;
-                global_player.isCreator = ret.isCreator;
+                global.player.roomId = ret.roomId;
+                global.player.seatNo = ret.seatNo;
+                global.player.isCreator = ret.isCreator;
                 cc.director.loadScene("gameScene");
             }
             console.log("create_room_success: " + JSON.stringify(ret));
         });
-        socket.on(global_const.apply_join_room, function (err, data) {
-            if (err) {
-                console.log(err);
-            }
-            else {
-                global_player.seatNo=data.seatNo;
-                console.log("apply_join_room: " + JSON.stringify(data));
-                cc.director.loadScene("gameScene");
-            }
-         
-        });
+
+
+    },
+    apply_join_room: function (err, data) {
+        if (err) {
+            
+            console.log(err);
+             
+        }
+        else {
+            global.player.seatNo = data.seatNo;
+            global.player.roomId = data.roomId;
+            console.log("apply_join_room: " + JSON.stringify(data));
+            cc.director.loadScene("gameScene");
+        }
+
     },
     onClick: function (event, customData) {
 
         //console.log('custom data =  ' + customData);
         switch (customData) {
-            case global_const.create_room:
-               
-                console.log(`玩家: ${global_player.nickname}  创建房间`);
-                socket.emit(global_const.create_room, global_player);
+            case global.const.create_room:
+
+                console.log(`玩家: ${global.player.nickname}  创建房间`);
+                global.socket.emit(global.const.create_room, global.player);
 
                 break;
-            case global_const.apply_join_room:
-                console.log(`玩家: ${global_player.nickname}  加入房间`);
-                socket.emit(global_const.apply_join_room, { roomId: "1314", nickname: global_player.nickname });
-                break;
+            case global.const.apply_join_room:
 
+            global.socket.emit(global.const.apply_join_room, { roomId:"111111", nickname: global.player.nickname });
+            global.socket.on(global.const.apply_join_room, this.apply_join_room.bind(this));
+
+                // this.inputRoomNo = cc.instantiate(this.inputRoomNoPrefab);
+                // this.inputRoomNo.parent = this.node;
+                // console.log(`玩家: ${global.player.nickname}  加入房间`);
+                break;
+            case "close_dialog":
+                this.dialog.active = false;
+                break;
             default:
                 break;
         }

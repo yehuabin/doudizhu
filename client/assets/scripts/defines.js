@@ -8,4 +8,5 @@ defines.gameConfig = {
 
 // export default defines;
 window.defines = defines;
-window.global_player={ userid: "yhb", nickname: "yhb" + Math.floor(Math.random() * 100) };
+window.global={};
+window.global.player={ userid: "yhb", nickname: "yhb" + Math.floor(Math.random() * 100) };
