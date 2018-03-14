@@ -1,4 +1,6 @@
 var Card = require('../data/Card');
+var tools = require('../utility/tools');
+var rules = require('../utility/rules');
 
 var posArray = [cc.p(-580, -250), cc.p(580, 0), cc.p(0, 300), cc.p(-580, 0)];
 
@@ -9,8 +11,11 @@ cc.Class({
         userPrefab: cc.Prefab,
         cardPrefab: cc.Prefab,
         readyBtn: cc.Button,
-        optBtns: cc.Node,
-        pushCardsNode:cc.Node,
+        pushBtn: cc.Node,
+        passBtn:cc.Node,
+        messageLabel:cc.Label,
+        timerNode: cc.Node,
+        pushCardsContainer: cc.Node,
         roomNoLabel: {
             default: null,
             type: cc.Label
@@ -20,51 +25,17 @@ cc.Class({
             type: cc.SpriteAtlas
         }
     },
-
+    showMessage:function(msg){
+        this.messageLabel.node.opacity=255;
+        this.messageLabel.string=msg;
+        this.messageLabel.node.runAction(cc.fadeOut(2));
+    },
     getConvertSeatNo: function (seatNo) {
         var seatIndex = seatNo - global.player.seatNo;
         if (seatIndex < 0) {
             seatIndex += 4;
         }
         return seatIndex;
-    },
-    // LIFE-CYCLE CALLBACKS:
-    join_room: function (err, ret) {
-        console.log("joinRoom " + JSON.stringify(ret));
-        var user = cc.instantiate(this.userPrefab);
-        user.parent = this.node;
-        user.position = posArray[this.getConvertSeatNo(ret.seatNo)];
-        user.getChildByName("nickname").getComponent(cc.Label).string = ret.nickname;
-
-        this.playerNodes.push(user);
-    },
-    sync_room: function (err, ret) {
-        this.roomNoLabel.string = "房间号:" + global.player.roomId;
-        console.log("syncRoom " + JSON.stringify(ret));
-
-        for (let i = 0; i < ret.length; i++) {
-
-            var user = cc.instantiate(this.userPrefab);
-            user.parent = this.node;
-            user.position = posArray[this.getConvertSeatNo(i)];
-            user.getChildByName("nickname").getComponent(cc.Label).string = ret[i].nickname;
-            if (ret[i].state == "ready") {
-                user.getChildByName("ready").opacity = 255;
-            }
-            this.playerNodes.push(user);
-        }
-    },
-    leave_room: function (err, ret) {
-        console.log("leaveRoom " + JSON.stringify(ret));
-        for (let i = 0; i < this.playerNodes.length; i++) {
-            const playerNode = this.playerNodes[i];
-            if (playerNode.getChildByName("nickname").getComponent(cc.Label).string == ret) {
-                playerNode.removeFromParent(true);
-                playerNode.destroy();
-                this.playerNodes.splice(i, 1);
-                break;
-            }
-        }
     },
     getPlayerNode: function (nickname) {
         for (let i = 0; i < this.playerNodes.length; i++) {
@@ -74,16 +45,82 @@ cc.Class({
             }
         }
     },
-    start_game: function (err, ret) {
-        console.log("start_game " + JSON.stringify(ret));
-        var cards = ret.cards;
+    displayTimer: function (seatNo) {
+        if (seatNo == global.player.seatNo) {
+            this.timerNode.active = false;
+        }
+        else {
+            this.timerNode.active = true;
+            var convertSeatNo = this.getConvertSeatNo(seatNo);
+            var pos = [90, 0, -90];
+            this.timerNode.rotation = pos[convertSeatNo - 1];
+        }
+    },
+    // LIFE-CYCLE CALLBACKS:
+    join_room: function (err, data) {
+        if(err){
+            console.log(err);
+            this.showMessage(err);
+            return;
+        }
+        console.log("joinRoom " + JSON.stringify(data));
+        var user = cc.instantiate(this.userPrefab);
+        user.parent = this.node;
+        user.position = posArray[this.getConvertSeatNo(data.seatNo)];
+        user.getChildByName("nickname").getComponent(cc.Label).string = data.nickname;
+
+        this.playerNodes.push(user);
+    },
+    sync_room: function (err, data) {
+        if(err){
+            console.log(err);
+            this.showMessage(err);
+            return;
+        }
+        this.roomNoLabel.string = "房间号:" + global.player.roomId;
+        console.log("syncRoom " + JSON.stringify(data));
+
+        for (let i = 0; i < data.length; i++) {
+
+            var user = cc.instantiate(this.userPrefab);
+            user.parent = this.node;
+            user.position = posArray[this.getConvertSeatNo(i)];
+            user.getChildByName("nickname").getComponent(cc.Label).string = data[i].nickname;
+            if (data[i].state == "ready") {
+                user.getChildByName("ready").opacity = 255;
+            }
+            this.playerNodes.push(user);
+        }
+    },
+    leave_room: function (err, data) {
+        console.log("leaveRoom " + JSON.stringify(data));
+        for (let i = 0; i < this.playerNodes.length; i++) {
+            const playerNode = this.playerNodes[i];
+            if (playerNode.getChildByName("nickname").getComponent(cc.Label).string == data) {
+                playerNode.removeFromParent(true);
+                playerNode.destroy();
+                this.playerNodes.splice(i, 1);
+                break;
+            }
+        }
+    },
+   
+    start_game: function (err, data) {
+        if(err){
+            console.log(err);
+            this.showMessage(err);
+            return;
+        }
+        console.log("start_game " + JSON.stringify(data));
+        var cards = data.cards;
         for (let i = 0; i < this.playerNodes.length; i++) {
             this.playerNodes[i].getChildByName("ready").opacity = 0;
         }
-        if (ret.startNo == global.player.seatNo) {
-            this.optBtns.active = true;
+        if (data.startNo == global.player.seatNo) {
+            this.pushBtn.active = true;
+            this.passBtn.active=false;
         }
-
+        this.displayTimer(data.startNo);
         for (let i = 0; i < cards.length; i++) {
             var cardPre = cc.instantiate(this.cardPrefab);
             cardPre.parent = this.node;
@@ -98,43 +135,64 @@ cc.Class({
             }
         }
     },
+   
     ready_game: function (err, readyPlayer) {
+        if(err){
+            console.log(err);
+            this.showMessage(err);
+            return;
+        }
         console.log(`ready_game : ${readyPlayer.nickname}`);
         var playerNode = this.getPlayerNode(readyPlayer.nickname);
         playerNode.getChildByName("ready").opacity = 255;
     },
     push_card: function (err, turn) {
+        if(err){
+            console.log(err);
+            this.showMessage(err);
+            return;
+        }
+        this.deskTurn=turn.deskTurn;
         console.log(`push_card : ${JSON.stringify(turn)}`);
         if (turn.seatNo == global.player.seatNo) {
-            this.optBtns.active = true;
+            this.pushBtn.active = true;
+            if(!turn.deskTurn||turn.deskTurn.seatNo!=global.player.seatNo){
+                this.passBtn.active = true;
+            }
+           
+        }
+        this.displayTimer(turn.seatNo);
+        if (turn.pass) {
+            return;
+        }
+        var preNo = (turn.seatNo - 1 + 4) % 4;
+        if (preNo == global.player.seatNo) {
+            return;
         }
 
+        this.pushCardsContainer.removeAllChildren();
         //自己不需要该效果
         for (let i = 0; i < turn.cards.length; i++) {
-
             var cardPre = cc.instantiate(this.cardPrefab);
-            cardPre.parent = this.node;
+            cardPre.position = cc.p(50 * i, 0);
+            cardPre.parent = this.pushCardsContainer;
             var card = new Card(turn.cards[i].no, turn.cards[i].shape, cardPre, this.cardsSpriteAtlas);
-            cardPre.position = cc.p(-485 + i * 51, 100);
+
         }
     },
     onLoad() {
-        for (let index = 0; index < 10; index++) {
-            var cardPre = cc.instantiate(this.cardPrefab);
-            cardPre.parent = this.pushCardsNode;
-            var card = new Card(1, "红桃", cardPre, this.cardsSpriteAtlas);
-            var c=this.pushCardsNode.getNodeToParentTransform();
-            var n=this.pushCardsNode.convertToNodeSpace ( cc.p(c.tx, c.ty) )
-            cardPre.position = cc.p(n.x, n.y);
-        }
-
-
-        this.optBtns.active = false;
+        this.timerNode.active = false;
+        this.passBtn.active = false;
+        this.pushBtn.active = false;
         this.startSelect = false;
         this.cardList = [];
         this.playerNodes = [];
 
         global.socket.emit(global.const.sync_room);
+        //todo:
+        this.readyBtn.node.active = false;
+        global.socket.emit(global.const.ready_game);
+
         global.socket.on(global.const.sync_room, this.sync_room.bind(this));
         global.socket.on(global.const.leave_room, this.leave_room.bind(this));
         global.socket.on(global.const.join_room, this.join_room.bind(this));
@@ -144,33 +202,84 @@ cc.Class({
     },
 
     onClick: function (event, eventData) {
+
         switch (eventData) {
+
+
             case "push":
-                this.optBtns.active = false;
-                var turn={};
-                turn.seatNo=global.player.seatNo;
-                turn.cards=[];
-                var selectedCards = this.cardList.filter(function (card) {
-                    if (card.getSelected()) {
-                        turn.cards.push({no:card.no,shape:card.shape});
-                        return card;
-                    }
-                });
-                for (let i = 0; i < selectedCards.length; i++) {
-                    const card = selectedCards[i];
-                    if (card.getSelected()) {
-                        var moveTo = cc.moveTo(0.1, cc.p(-450 + i * 51, 0));
-                        card.preFab.runAction(moveTo);
-                        card.pushCard();
-                    }
-                }
+            case "pass":
                
-                global.socket.emit(global.const.push_card,turn);
+                var turn = {};
+                turn.seatNo = global.player.seatNo;
+                turn.cards = [];
+                if (eventData != "pass") {
+                    var selectedCards = this.cardList.filter(function (card) {
+                        if (card.getSelected()) {
+                            turn.cards.push({ no: card.no, shape: card.shape });
+                            return card;
+                        }
+                    });
+                    if(selectedCards.length==0){
+                        this.showMessage(global.const.not_select_card);
+                        return;
+                    }
+                    if(!rules.isValid(selectedCards)){
+                        this.showMessage(global.const.not_match_rule);
+                        return;
+                    }
+                    if(this.deskTurn&&this.deskTurn.seatNo!=global.player.seatNo){
+                        if(!rules.isBig(selectedCards,this.deskTurn.cards)){
+                            this.showMessage(global.const.not_big_rule);
+                            return;
+                        }
+                    }
+                    this.pushCardsContainer.removeAllChildren();
+                    for (let i = 0; i < selectedCards.length; i++) {
+                        const card = selectedCards[i];
+                        tools.splice(this.cardList, card);
+                        card.preFab.position = cc.p(50 * i, 0);
+                        card.preFab.zIndex = 1;
+                        card.preFab.parent = this.pushCardsContainer;
+
+                        // if (card.getSelected()) {
+                        //     var moveTo = cc.moveTo(0.1, cc.p(-450 + i * 51, 0));
+                        //     card.preFab.runAction(moveTo);
+                        //     card.pushCard();
+                        // }
+                    }
+                    //整理手中的牌
+                    console.log(`剩余牌数量： ${this.cardList.length}`);
+                    for (let i = 0; i < this.cardList.length; i++) {
+                        var cardPre = this.cardList[i].preFab;
+                        console.log(i + " : " + this.cardList[i].shape + " " + this.cardList[i].no);
+                        let moveTo;
+                        if (i < 21) {
+                            cardPre.zIndex = i + 1;
+                            moveTo = cc.moveTo(0.1, cc.p(-450 + i * 51, -270));
+                            console.log(cardPre.zIndex);
+                        }
+                        else {
+                            moveTo = cc.moveTo(0.1, cc.p(-450 + (i - 21) * 51, -170));
+                            cardPre.zIndex = 0
+                        }
+                        cardPre.runAction(moveTo);
+                    }
+
+                }
+                else {
+                    turn.pass = true;
+                }
+                this.pushBtn.active = false;
+                this.passBtn.active = false;
+                global.socket.emit(global.const.push_card, turn);
                 break;
             case global.const.ready_game:
                 this.readyBtn.node.active = false;
                 global.socket.emit(global.const.ready_game);
-                //global.socket.emit(global.const.start_game);
+                break;
+            case "back":
+         
+               // cc.director.loadScene("mainScene");
                 break;
             default:
                 break;

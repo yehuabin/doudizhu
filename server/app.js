@@ -91,14 +91,14 @@ app.on('connection', function (socket) {
     socket.on(global_const.ready_game, function () {
         var room = getPlayerRoom();
         console.log(`ready_game:` + socket.nickname);
-         var player= room.getPlayer(socket);
-         player.ready();
+        var player = room.getPlayer(socket);
+        player.ready();
 
         room.players.forEach(p => {
             p.getSocket().emit(global_const.ready_game, null, player);
         });
         //全都准备好就进行发牌
-        if(room.isAllReady()){
+        if (room.isAllReady()) {
             room.playing();
 
             var cardList = [];
@@ -119,30 +119,30 @@ app.on('connection', function (socket) {
                     }
                 }
             }
-    
+
             var randomCardList = [];
             while (cardList.length > 0) {
                 var index = Math.floor((Math.random() * cardList.length));
                 randomCardList.push(cardList[index]);
                 cardList.splice(index, 1);
             }
-    
+
             var count = randomCardList.length;
             while (count > 0) {
                 let i = count % 4;
                 room.players[i].addCard(randomCardList[0]);
                 randomCardList.splice(0, 1);
                 count--;
-    
+
             }
-    
+
             //var startNo=Math.floor(Math.random()*room.players.length);
-            var startNo=0;
-            room.setTurn(startNo,true);
+            var startNo = 0;
+            room.setTurn(startNo, true);
             console.log(`start_game ` + room.players[0].cards.length + JSON.stringify(room.players[0].cards));
             // socket.emit(global_const.start_game,null,room.players[0].cards);
             room.players.forEach(player => {
-                player.getSocket().emit(global_const.start_game, null, {startNo:startNo,cards:player.cards});
+                player.getSocket().emit(global_const.start_game, null, { startNo: startNo, cards: player.cards });
             });
         }
     });
@@ -202,30 +202,39 @@ app.on('connection', function (socket) {
     });
     socket.on(global_const.push_card, function (turn) {
         var room = getPlayerRoom();
-        console.log(`push_card:` + socket.nickname);
-        var player= room.getPlayer(socket);
+        console.log(`push_card:${JSON.stringify(turn)} ` + socket.nickname);
+        var player = room.getPlayer(socket);
 
-        if(player.seatNo!=turn.seatNo){
-            console.log(`push_card:还没轮到你出牌`);
-            socket.emit(global_const.push_card,"还没轮到你出牌");
-            return;
-        }
-        if(!turn.cards||turn.cards.length==0){
-            socket.emit(global_const.push_card,"请选择你要出的牌");
-            return;
-        }
-        if(turn.pass){
+      
+        if (turn.pass) {
+            
+            
             //todo:不出 直接跳到下家
-            return;
+
+        }
+        else {
+            // if (player.seatNo != turn.seatNo) {
+            //     console.log(`push_card:还没轮到你出牌`);
+            //     socket.emit(global_const.push_card, "还没轮到你出牌");
+            //     return;
+            // }
+            if (!turn.cards || turn.cards.length == 0) {
+                socket.emit(global_const.push_card, global_const.not_select_card);
+                return;
+            }
+
+            room.deskTurn={seatNo:turn.seatNo,cards:turn.cards};
+            //把牌从用户手里去掉
+            player.pushCard(turn.cards);
         }
         //todo:turn.score 计算打出的牌带了多少分数
-
-        //把牌从用户手里去掉
-        player.pushCard(turn.cards);
-
         //出牌顺序交给下家
-        turn.seatNo=(turn.seatNo+1)%4;
-        room.players.forEach(p => {
+        turn.seatNo = (turn.seatNo + 1) % 4;
+        turn.deskTurn = room.deskTurn;
+
+
+
+        room.players.forEach(p => { 
             p.getSocket().emit(global_const.push_card, null, turn);
         });
 

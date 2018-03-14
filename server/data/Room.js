@@ -3,6 +3,8 @@ var Room = function () {
     this.roomId = "111111";
     this.seatNos = [[0, 0], [1, 0], [2, 0], [3, 0]];
     this.players = [];
+    
+    this.deskTurn=null;
     this.turn={};
     this.state="wait";//playing,over
     this.maxPlayerNo = 4;

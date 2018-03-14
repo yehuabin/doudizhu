@@ -10,7 +10,12 @@ const global_const={
     leave_room:"leave_room",
     push_card:"push_card",
     card_shapes:["红桃","梅花","方块","黑桃"],
-    card_nos:[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
-    
+    card_nos:[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],
+
+
+
+
+    //error message
+    not_select_card:"请选择你要出的牌"
 };
 module.exports = global_const;

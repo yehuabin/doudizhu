@@ -47,10 +47,10 @@ Card.prototype.setShape = function () {
                 shape = "GameCard-card_tag_2";
                 break;
             case global_const.card_shapes[1]:
-                shape = "GameCard-card_tag_0";
+                shape = "GameCard-card_tag_1";
                 break;
             case global_const.card_shapes[2]:
-                shape = "GameCard-card_tag_1";
+                shape = "GameCard-card_tag_0";
                 break;
             default:
                 shape = "GameCard-card_tag_3";
@@ -72,7 +72,7 @@ Card.prototype.setNo = function () {
         no_node.getComponent(cc.Sprite).node.setPositionY(0);
     }
     else {
-        if (this.shape == global_const.card_shapes[0] || this.shape == global_const.card_shapes[1]) {
+        if (this.shape == global_const.card_shapes[0] || this.shape == global_const.card_shapes[2]) {
             image += "red_0";
         }
         else {
