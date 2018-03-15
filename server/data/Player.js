@@ -1,8 +1,9 @@
-var Player = function (nickname, socket) {
-    this.nickname = nickname;
+var Player = function (data) {
+    this.nickname = data.nickname;
+    this.uuid = data.uuid;
     this.isCreator = false;
-    var socket = socket;
-    this.overNo=-1;
+    var socket = data.socket;
+    this.overNo=0;
     this.score=0;
     this.seatNo = 0;
     this.state="wait_ready";//wait_ready,ready,playing,over,offline
@@ -30,6 +31,9 @@ var Player = function (nickname, socket) {
 }
 Player.prototype.ready=function () {
     this.state="ready";
+}
+Player.prototype.isPushOver=function () {
+    return this.cards.length==0;
 }
 Player.prototype.pushCard=function (pushCards) {
     for (let i = 0; i < pushCards.length; i++) {

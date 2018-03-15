@@ -38,7 +38,8 @@ cc.Class({
         }
 
         if (this.roomNos.length == this.roomNoLabel.length) {
-            global.socket.emit(global.const.apply_join_room, { roomId: this.roomNos, nickname: global.player.nickname });
+            global.socket.emit(global.const.apply_join_room, { roomId: this.roomNos, nickname: global.player.nickname,uuid:
+            global.player.uuid });
         }
     },
     apply_join_room: function (err, data) {

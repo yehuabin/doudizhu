@@ -57,7 +57,8 @@ cc.Class({
                 break;
             case global.const.apply_join_room:
 
-            global.socket.emit(global.const.apply_join_room, { roomId:"111111", nickname: global.player.nickname });
+            global.socket.emit(global.const.apply_join_room, { roomId:"111111", nickname: global.player.nickname,
+            uuid:global.player.uuid });
             global.socket.on(global.const.apply_join_room, this.apply_join_room.bind(this));
 
                 // this.inputRoomNo = cc.instantiate(this.inputRoomNoPrefab);

@@ -1,8 +1,9 @@
 var Card = require('../data/Card');
+var Player = require('../data/Player');
 var tools = require('../utility/tools');
 var rules = require('../utility/rules');
 
-var posArray = [cc.p(-580, -250), cc.p(580, 0), cc.p(0, 300), cc.p(-580, 0)];
+
 
 cc.Class({
     extends: cc.Component,
@@ -13,7 +14,9 @@ cc.Class({
         readyBtn: cc.Button,
         pushBtn: cc.Node,
         passBtn:cc.Node,
+        cardMask:cc.Node,
         messageLabel:cc.Label,
+        deskLabel:cc.Label,
         timerNode: cc.Node,
         pushCardsContainer: cc.Node,
         roomNoLabel: {
@@ -37,12 +40,24 @@ cc.Class({
         }
         return seatIndex;
     },
-    getPlayerNode: function (nickname) {
+    getPlayerNode: function (uuid) {
         for (let i = 0; i < this.playerNodes.length; i++) {
             const playerNode = this.playerNodes[i];
-            if (playerNode.getChildByName("nickname").getComponent(cc.Label).string == nickname) {
+            if (playerNode.uuid == uuid) {
                 return playerNode;
             }
+        }
+    },
+    showGameInfo:function(turn){
+        for (let i = 0; i < this.playerNodes.length; i++) {
+            const player = this.playerNodes[i];
+            for (let j = 0; j < turn.gameInfo.length; j++) {
+                const gameInfo = turn.gameInfo[j];
+                if(this.getConvertSeatNo(gameInfo.seatNo)==player.seatNo){
+                    player.setScore(turn.gameInfo[j].score);
+                }
+            }
+          
         }
     },
     displayTimer: function (seatNo) {
@@ -64,12 +79,19 @@ cc.Class({
             return;
         }
         console.log("joinRoom " + JSON.stringify(data));
-        var user = cc.instantiate(this.userPrefab);
-        user.parent = this.node;
-        user.position = posArray[this.getConvertSeatNo(data.seatNo)];
-        user.getChildByName("nickname").getComponent(cc.Label).string = data.nickname;
-
-        this.playerNodes.push(user);
+        // var user = cc.instantiate(this.userPrefab);
+        // user.parent = this.node;
+        // user.position = posArray[this.getConvertSeatNo(data.seatNo)];
+        // user.getChildByName("nickname").getComponent(cc.Label).string = data.nickname;
+    
+        this.playerNodes.push(new Player({
+            nickname:data.nickname,
+            uuid:data.uuid,
+            score:0,
+            seatNo:this.getConvertSeatNo(data.seatNo),
+            prefab:this.userPrefab,
+            parent:this.node
+        }));
     },
     sync_room: function (err, data) {
         if(err){
@@ -82,24 +104,33 @@ cc.Class({
 
         for (let i = 0; i < data.length; i++) {
 
-            var user = cc.instantiate(this.userPrefab);
-            user.parent = this.node;
-            user.position = posArray[this.getConvertSeatNo(i)];
-            user.getChildByName("nickname").getComponent(cc.Label).string = data[i].nickname;
-            if (data[i].state == "ready") {
-                user.getChildByName("ready").opacity = 255;
-            }
-            this.playerNodes.push(user);
+            // var user = cc.instantiate(this.userPrefab);
+            // user.parent = this.node;
+            // user.position = posArray[this.getConvertSeatNo(i)];
+            // user.getChildByName("nickname").getComponent(cc.Label).string = data[i].nickname;
+            // if (data[i].state == "ready") {
+            //     user.getChildByName("ready").opacity = 255;
+            // }
+            var p=new Player({
+                nickname:data[i].nickname,
+                uuid:data[i].uuid,
+                score:0,
+                seatNo:this.getConvertSeatNo(i),
+                prefab:this.userPrefab,
+                parent:this.node
+            });
+            p.showReady();
+            this.playerNodes.push(p);
         }
     },
     leave_room: function (err, data) {
         console.log("leaveRoom " + JSON.stringify(data));
         for (let i = 0; i < this.playerNodes.length; i++) {
             const playerNode = this.playerNodes[i];
-            if (playerNode.getChildByName("nickname").getComponent(cc.Label).string == data) {
-                playerNode.removeFromParent(true);
-                playerNode.destroy();
-                this.playerNodes.splice(i, 1);
+            if (this.getPlayerNode(data.uuid)) {
+                // playerNode.prefab.removeFromParent(true);
+                // playerNode.prefab.destroy();
+                // this.playerNodes.splice(i, 1);
                 break;
             }
         }
@@ -114,7 +145,7 @@ cc.Class({
         console.log("start_game " + JSON.stringify(data));
         var cards = data.cards;
         for (let i = 0; i < this.playerNodes.length; i++) {
-            this.playerNodes[i].getChildByName("ready").opacity = 0;
+            this.playerNodes[i].hideReady();
         }
         if (data.startNo == global.player.seatNo) {
             this.pushBtn.active = true;
@@ -143,8 +174,8 @@ cc.Class({
             return;
         }
         console.log(`ready_game : ${readyPlayer.nickname}`);
-        var playerNode = this.getPlayerNode(readyPlayer.nickname);
-        playerNode.getChildByName("ready").opacity = 255;
+        var playerNode = this.getPlayerNode(readyPlayer.uuid);
+        playerNode.showReady();
     },
     push_card: function (err, turn) {
         if(err){
@@ -152,6 +183,7 @@ cc.Class({
             this.showMessage(err);
             return;
         }
+        this.showGameInfo(turn);
         this.deskTurn=turn.deskTurn;
         console.log(`push_card : ${JSON.stringify(turn)}`);
         if (turn.seatNo == global.player.seatNo) {
@@ -159,7 +191,9 @@ cc.Class({
             if(!turn.deskTurn||turn.deskTurn.seatNo!=global.player.seatNo){
                 this.passBtn.active = true;
             }
-           
+        }
+        if(turn.deskTurn){
+            this.deskLabel.string=turn.deskTurn.nickname;
         }
         this.displayTimer(turn.seatNo);
         if (turn.pass) {
@@ -181,6 +215,9 @@ cc.Class({
         }
     },
     onLoad() {
+
+   
+
         this.timerNode.active = false;
         this.passBtn.active = false;
         this.pushBtn.active = false;
@@ -199,18 +236,38 @@ cc.Class({
         global.socket.on(global.const.start_game, this.start_game.bind(this));
         global.socket.on(global.const.ready_game, this.ready_game.bind(this));
         global.socket.on(global.const.push_card, this.push_card.bind(this));
+
+
+
+        for (let i = 0; i < 40; i++) {
+            var cardPre = cc.instantiate(this.cardPrefab);
+            cardPre.parent = this.cardMask;
+            this.cardList.push(new Card(1, "红桃", cardPre, this.cardsSpriteAtlas));
+            if (i < 21) {
+                cardPre.position = cc.p( + i * 51, 0);
+                cardPre.zIndex = 2;
+            }
+            else {
+                cardPre.position = cc.p( + (i - 21) * 51, 100);
+                cardPre.zIndex = 1;
+            }
+        }
+
+        this.cardMask.on('touchstart',function(){
+            console.log(1)
+        }.bind(this))
     },
 
     onClick: function (event, eventData) {
 
         switch (eventData) {
-
-
             case "push":
             case "pass":
                
                 var turn = {};
                 turn.seatNo = global.player.seatNo;
+                turn.nickname = global.player.nickname;
+                turn.uuid = global.player.uuid;
                 turn.cards = [];
                 if (eventData != "pass") {
                     var selectedCards = this.cardList.filter(function (card) {
@@ -227,6 +284,8 @@ cc.Class({
                         this.showMessage(global.const.not_match_rule);
                         return;
                     }
+
+                    //出牌前先跟桌上的牌比较大小
                     if(this.deskTurn&&this.deskTurn.seatNo!=global.player.seatNo){
                         if(!rules.isBig(selectedCards,this.deskTurn.cards)){
                             this.showMessage(global.const.not_big_rule);
@@ -278,7 +337,7 @@ cc.Class({
                 global.socket.emit(global.const.ready_game);
                 break;
             case "back":
-         
+        
                // cc.director.loadScene("mainScene");
                 break;
             default:

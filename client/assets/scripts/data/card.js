@@ -15,22 +15,22 @@ var Card = function (no, shape, cardPrefab, cardsSpriteAtlas) {
     this.pushCard = function () {
         _isPushed = true;
     };
-
-    cardPrefab.on('mousedown', function (event) {
-        if (_isPushed) {
-            return;
-        }
-        var pos = event.target.position;
-        _selected = !_selected;
-        if (_selected) {
-            var moveTo = cc.moveTo(0.1, cc.p(pos.x, pos.y + 20));
-            event.target.runAction(moveTo);
-        }
-        else {
-            var moveTo = cc.moveTo(0.1, cc.p(pos.x, pos.y - 20));
-            event.target.runAction(moveTo);
-        }
-    }.bind(this));
+ var callback=function (event) {
+    if (_isPushed) {
+        return;
+    }
+    var pos = event.target.position;
+    _selected = !_selected;
+    if (_selected) {
+        var moveTo = cc.moveTo(0.1, cc.p(pos.x, pos.y + 20));
+        event.target.runAction(moveTo);
+    }
+    else {
+        var moveTo = cc.moveTo(0.1, cc.p(pos.x, pos.y - 20));
+        event.target.runAction(moveTo);
+    }
+};
+   // cardPrefab.on('touchstart',callback.bind(this));
 
 }
 Card.prototype.setShape = function () {
