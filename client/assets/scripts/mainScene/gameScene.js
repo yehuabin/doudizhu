@@ -28,6 +28,42 @@ cc.Class({
             type: cc.SpriteAtlas
         }
     },
+    selectCard(touch) {
+        var lastIndex= this.cardList.length-1;
+       
+        for (var i = lastIndex; i >= 0; i--) {
+            if(touch.y>180&&i<21){
+                continue;
+            }
+            if(touch.y<180&&i>21){
+                continue;
+            }
+            var card=this.cardList[i];
+            var box = card.prefab.getBoundingBox();
+            if (cc.rectContainsPoint(box, touch)) {
+                card.select();
+                return card;
+            }
+        }
+    },
+    moveCard() {
+         for(var i in this.cardList){
+             var card=this.cardList[i];
+             if (card.getSelect()) {
+                card.unSelect();
+                if(card.isPush){
+                    card.isPush=false;
+                    card.prefab.y-=20;
+                }
+                else{
+                    card.isPush=true;
+                    card.prefab.y+=20;
+                }
+             
+            }
+         }
+        
+    },
     showMessage:function(msg){
         this.messageLabel.node.opacity=255;
         this.messageLabel.string=msg;
@@ -154,14 +190,14 @@ cc.Class({
         this.displayTimer(data.startNo);
         for (let i = 0; i < cards.length; i++) {
             var cardPre = cc.instantiate(this.cardPrefab);
-            cardPre.parent = this.node;
+            cardPre.parent = this.cardMask;
             this.cardList.push(new Card(cards[i].no, cards[i].shape, cardPre, this.cardsSpriteAtlas));
             if (i < 21) {
-                cardPre.position = cc.p(-450 + i * 51, -270);
+                cardPre.position = cc.p(180+ i * 51, 80);
                 cardPre.zIndex = 2;
             }
             else {
-                cardPre.position = cc.p(-450 + (i - 21) * 51, -170);
+                cardPre.position = cc.p(180+ (i - 21) * 51, 180);
                 cardPre.zIndex = 1;
             }
         }
@@ -215,9 +251,6 @@ cc.Class({
         }
     },
     onLoad() {
-
-   
-
         this.timerNode.active = false;
         this.passBtn.active = false;
         this.pushBtn.active = false;
@@ -238,24 +271,17 @@ cc.Class({
         global.socket.on(global.const.push_card, this.push_card.bind(this));
 
 
+       
 
-        for (let i = 0; i < 40; i++) {
-            var cardPre = cc.instantiate(this.cardPrefab);
-            cardPre.parent = this.cardMask;
-            this.cardList.push(new Card(1, "红桃", cardPre, this.cardsSpriteAtlas));
-            if (i < 21) {
-                cardPre.position = cc.p( + i * 51, 0);
-                cardPre.zIndex = 2;
-            }
-            else {
-                cardPre.position = cc.p( + (i - 21) * 51, 100);
-                cardPre.zIndex = 1;
-            }
-        }
-
-        this.cardMask.on('touchstart',function(){
-            console.log(1)
-        }.bind(this))
+        this.cardMask.on('touchstart',function(event){
+            this.selectCard(event.getLocation());
+        }.bind(this));
+        this.cardMask.on('touchmove',function(event){
+            this.selectCard(event.getLocation());
+        }.bind(this));
+        this.cardMask.on('touchend',function(event){
+            this.moveCard();
+        }.bind(this));
     },
 
     onClick: function (event, eventData) {
@@ -271,7 +297,7 @@ cc.Class({
                 turn.cards = [];
                 if (eventData != "pass") {
                     var selectedCards = this.cardList.filter(function (card) {
-                        if (card.getSelected()) {
+                        if (card.isPush) {
                             turn.cards.push({ no: card.no, shape: card.shape });
                             return card;
                         }
@@ -280,45 +306,44 @@ cc.Class({
                         this.showMessage(global.const.not_select_card);
                         return;
                     }
-                    if(!rules.isValid(selectedCards)){
-                        this.showMessage(global.const.not_match_rule);
-                        return;
-                    }
+                    // if(!rules.isValid(selectedCards)){
+                    //     this.showMessage(global.const.not_match_rule);
+                    //     return;
+                    // }
 
                     //出牌前先跟桌上的牌比较大小
-                    if(this.deskTurn&&this.deskTurn.seatNo!=global.player.seatNo){
-                        if(!rules.isBig(selectedCards,this.deskTurn.cards)){
-                            this.showMessage(global.const.not_big_rule);
-                            return;
-                        }
-                    }
+                    // if(this.deskTurn&&this.deskTurn.seatNo!=global.player.seatNo){
+                    //     if(!rules.isBig(selectedCards,this.deskTurn.cards)){
+                    //         this.showMessage(global.const.not_big_rule);
+                    //         return;
+                    //     }
+                    // }
                     this.pushCardsContainer.removeAllChildren();
                     for (let i = 0; i < selectedCards.length; i++) {
                         const card = selectedCards[i];
                         tools.splice(this.cardList, card);
-                        card.preFab.position = cc.p(50 * i, 0);
-                        card.preFab.zIndex = 1;
-                        card.preFab.parent = this.pushCardsContainer;
+                        card.prefab.position = cc.p(50 * i, 0);
+                        card.prefab.zIndex = 1;
+                        card.prefab.parent = this.pushCardsContainer;
 
-                        // if (card.getSelected()) {
+                        // if (card.getSelect()) {
                         //     var moveTo = cc.moveTo(0.1, cc.p(-450 + i * 51, 0));
-                        //     card.preFab.runAction(moveTo);
+                        //     card.prefab.runAction(moveTo);
                         //     card.pushCard();
                         // }
                     }
                     //整理手中的牌
                     console.log(`剩余牌数量： ${this.cardList.length}`);
                     for (let i = 0; i < this.cardList.length; i++) {
-                        var cardPre = this.cardList[i].preFab;
+                        var cardPre = this.cardList[i].prefab;
                         console.log(i + " : " + this.cardList[i].shape + " " + this.cardList[i].no);
                         let moveTo;
                         if (i < 21) {
                             cardPre.zIndex = i + 1;
-                            moveTo = cc.moveTo(0.1, cc.p(-450 + i * 51, -270));
-                            console.log(cardPre.zIndex);
+                            moveTo = cc.moveTo(0.1, cc.p(180 + i * 51, 80));
                         }
                         else {
-                            moveTo = cc.moveTo(0.1, cc.p(-450 + (i - 21) * 51, -170));
+                            moveTo = cc.moveTo(0.1, cc.p(180 + (i - 21) * 51, 180));
                             cardPre.zIndex = 0
                         }
                         cardPre.runAction(moveTo);
@@ -343,10 +368,7 @@ cc.Class({
             default:
                 break;
         }
-    },
-    start() {
-
-    },
-
-    // update (dt) {},
+    }
+  
+   
 });

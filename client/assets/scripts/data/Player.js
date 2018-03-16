@@ -13,7 +13,7 @@ var Player = function (data) {
 
 Player.prototype.setScore = function (score) {
     var scoreLabel = this.prefab.getChildByName("score").getComponent(cc.Label);
-    scoreLabel.opacity = 0;
+    scoreLabel.node.opacity = 255;
     scoreLabel.string = score;
     scoreLabel.node.runAction(cc.fadeIn(1));
 

@@ -25,8 +25,8 @@ app.on('connection', function (socket) {
         room.seatNos[0][1] = 1;
         var player = new Player({
             nickname: user.nickname,
-             socket:socket,
-             uuid:user.uuid
+            socket: socket,
+            uuid: user.uuid
         });
         player.isCreator = true;
 
@@ -57,7 +57,7 @@ app.on('connection', function (socket) {
             err = "房间已经满了";
         }
         else {
-            var player = new Player({nickname:joinRoomData.nickname,uuid:joinRoomData.uuid,socket:socket});
+            var player = new Player({ nickname: joinRoomData.nickname, uuid: joinRoomData.uuid, socket: socket });
 
             for (let i = 0; i < room.seatNos.length; i++) {
 
@@ -213,20 +213,35 @@ app.on('connection', function (socket) {
         var room = getPlayerRoom();
         console.log(`push_card:${JSON.stringify(turn)} ` + socket.nickname);
         var player = room.getPlayer(socket);
-        var  nextNo = (turn.seatNo + 1) % 4;
-      
-        if (turn.pass) {
-            
-            //如果是最后一位不出，把分数给大的玩家
-            if(nextNo==room.deskTurn.seatNo){
-                room.players[nextNo].score+=room.deskTurn.score;
-                room.deskTurn.score=0;
+        var nextNo = room.getNextPushNo(turn.seatNo);
 
-                if(room.players[nextNo].cards.length==0){
-                    //当前玩家出完，下家接风
+        if (turn.pass) {
+
+            //如果是最后一位不出，把分数给大的玩家
+            if (nextNo == room.deskTurn.seatNo) {
+                room.players[nextNo].score += room.deskTurn.score;
+                room.deskTurn.score = 0;
+
+                if (room.players[nextNo].cards.length == 0) {
+
+                    while (room.players[nextNo].cards.length == 0 && !room.gameOver) {
+                        nextNo = (nextNo + 1) % 4;
+                        if (nextNo == (turn.seatNo + 1) % 4) {
+                            room.gameOver == true;
+                        }
+
+                    }
+                    if(!room.gameOver){
+                        turn.isJiefeng=true;
+                    }
+
                 }
+
+                // if(room.players[nextNo].cards.length==0){
+                //     //当前玩家出完，下家接风
+                // }
             }
-            
+
             //todo:不出 直接跳到下家
 
         }
@@ -241,35 +256,35 @@ app.on('connection', function (socket) {
                 return;
             }
 
-            let score=rules.getSumScore(turn.cards);//当前用户手中打出的牌
-            if(!room.deskTurn){
-                room.deskTurn={score:0};
+            let score = rules.getSumScore(turn.cards);//当前用户手中打出的牌
+            if (!room.deskTurn) {
+                room.deskTurn = { score: 0 };
             }
 
-            room.deskTurn.score+=score;
-            room.deskTurn.nickname=turn.nickname;
-            room.deskTurn.uuid=turn.uuid;
-            room.deskTurn.seatNo=turn.seatNo;
-            room.deskTurn.cards=turn.cards;
+            room.deskTurn.score += score;
+            room.deskTurn.nickname = turn.nickname;
+            room.deskTurn.uuid = turn.uuid;
+            room.deskTurn.seatNo = turn.seatNo;
+            room.deskTurn.cards = turn.cards;
             //把牌从用户手里去掉
             player.pushCard(turn.cards);
-            if(player.isPushOver()){
+            if (player.isPushOver()) {
                 room.overNo++;
-                player.overNo=room.overNo;
+                player.overNo = room.overNo;
             }
 
-            if(room.overNo>1){
+            if (room.overNo > 1) {
                 //两个玩家出去要判断游戏是否可以结束
             }
         }
         //todo:turn.score 计算打出的牌带了多少分数
         //出牌顺序交给下家
-        turn.seatNo =nextNo;
+        turn.seatNo = nextNo;
         turn.deskTurn = room.deskTurn;
-        turn.gameInfo=room.getPlayerGameInfo();
+        turn.gameInfo = room.getPlayerGameInfo();
         console.log(`push_card_over ${JSON.stringify(turn)}`);
 
-        room.players.forEach(p => { 
+        room.players.forEach(p => {
             p.getSocket().emit(global_const.push_card, null, turn);
         });
 
@@ -284,7 +299,7 @@ app.on('connection', function (socket) {
             }
             else {
                 room.players.forEach(player => {
-                    player.getSocket().emit(global_const.leave_room, null, {nickname:socket.nickname,uuid:socket.uuid});
+                    player.getSocket().emit(global_const.leave_room, null, { nickname: socket.nickname, uuid: socket.uuid });
                 });
             }
         }

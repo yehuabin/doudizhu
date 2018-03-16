@@ -2,41 +2,51 @@ var global_const = require('./global_const');
 var Card = function (no, shape, cardPrefab, cardsSpriteAtlas) {
     this.shape = shape;
     this.no = no;
-    this.preFab = cardPrefab;
+    this.prefab = cardPrefab;
+    this.isPush=false;
     this.cardsSpriteAtlas = cardsSpriteAtlas;
     var _selected = false;
     var _isPushed = false;
+    var selectedBgNode= this.prefab.getChildByName("selectedBg");
 
     this.setNo();
     this.setShape();
-    this.getSelected = function () {
+    this.getSelect = function () {
         return _selected;
+    }
+    this.select = function () {
+        selectedBgNode.opacity =255;
+         _selected=true;
+    }
+    this.unSelect = function () {
+        selectedBgNode.opacity = 0;
+         _selected=false;
     }
     this.pushCard = function () {
         _isPushed = true;
     };
- var callback=function (event) {
-    if (_isPushed) {
-        return;
-    }
-    var pos = event.target.position;
-    _selected = !_selected;
-    if (_selected) {
-        var moveTo = cc.moveTo(0.1, cc.p(pos.x, pos.y + 20));
-        event.target.runAction(moveTo);
-    }
-    else {
-        var moveTo = cc.moveTo(0.1, cc.p(pos.x, pos.y - 20));
-        event.target.runAction(moveTo);
-    }
-};
-   // cardPrefab.on('touchstart',callback.bind(this));
+    var callback = function (event) {
+        if (_isPushed) {
+            return;
+        }
+        var pos = event.target.position;
+        _selected = !_selected;
+        if (_selected) {
+            var moveTo = cc.moveTo(0.1, cc.p(pos.x, pos.y + 20));
+            event.target.runAction(moveTo);
+        }
+        else {
+            var moveTo = cc.moveTo(0.1, cc.p(pos.x, pos.y - 20));
+            event.target.runAction(moveTo);
+        }
+    };
+    // cardPrefab.on('touchstart',callback.bind(this));
 
 }
 Card.prototype.setShape = function () {
-    var shape_big_sprite = this.preFab.getChildByName("shape_big").getComponent(cc.Sprite)
+    var shape_big_sprite = this.prefab.getChildByName("shape_big").getComponent(cc.Sprite)
     if (this.no == 14 || this.no == 15) {
-        this.preFab.getChildByName("shape_small").active = false;
+        this.prefab.getChildByName("shape_small").active = false;
         shape_big_sprite.spriteFrame = this.cardsSpriteAtlas.getSpriteFrame("GameCard-card_tag_" + (this.no - 10));
     }
 
@@ -56,12 +66,12 @@ Card.prototype.setShape = function () {
                 shape = "GameCard-card_tag_3";
                 break;
         }
-        this.preFab.getChildByName("shape_small").getComponent(cc.Sprite).spriteFrame = this.cardsSpriteAtlas.getSpriteFrame(shape);
+        this.prefab.getChildByName("shape_small").getComponent(cc.Sprite).spriteFrame = this.cardsSpriteAtlas.getSpriteFrame(shape);
         shape_big_sprite.spriteFrame = this.cardsSpriteAtlas.getSpriteFrame(shape);
     }
 }
 Card.prototype.setNo = function () {
-    var no_node = this.preFab.getChildByName("no");
+    var no_node = this.prefab.getChildByName("no");
     var image = "GameCard-card_";
     if (this.no == 14) {
         image = "GameCard-card_wangtag_1";

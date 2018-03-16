@@ -10,6 +10,6 @@ var Card=function(no,shape){
     return index+this.no*10;
  };
  Card.prototype.equal=function(other){
-    return this.shape==other.shape&&this.no==other.shape;
+    return this.shape==other.shape&&this.no==other.no;
  };
  module.exports=Card;

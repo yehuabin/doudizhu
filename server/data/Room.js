@@ -4,6 +4,7 @@ var Room = function () {
     this.seatNos = [[0, 0], [1, 0], [2, 0], [3, 0]];
     this.players = [];
     this.overNo = 0;
+    this.gameOver=false;
     this.deskTurn = null;
     this.turn = {};
     this.state = "wait";//playing,over
