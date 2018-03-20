@@ -209,86 +209,12 @@ app.on('connection', function (socket) {
             player.getSocket().emit(global_const.start_game, null, player.cards);
         });
     });
+
     socket.on(global_const.push_card, function (turn) {
         var room = getPlayerRoom();
-        console.log(`push_card:${JSON.stringify(turn)} ` + socket.nickname);
-        var player = room.getPlayer(socket);
-        var nextNo = room.getNextPushNo(turn.seatNo);
-
-        if (turn.pass) {
-
-            //如果是最后一位不出，把分数给大的玩家
-            if (nextNo == room.deskTurn.seatNo) {
-                room.players[nextNo].score += room.deskTurn.score;
-                room.deskTurn.score = 0;
-
-                if (room.players[nextNo].cards.length == 0) {
-
-                    while (room.players[nextNo].cards.length == 0 && !room.gameOver) {
-                        nextNo = (nextNo + 1) % 4;
-                        if (nextNo == (turn.seatNo + 1) % 4) {
-                            room.gameOver == true;
-                        }
-
-                    }
-                    if(!room.gameOver){
-                        turn.isJiefeng=true;
-                    }
-
-                }
-
-                // if(room.players[nextNo].cards.length==0){
-                //     //当前玩家出完，下家接风
-                // }
-            }
-
-            //todo:不出 直接跳到下家
-
-        }
-        else {
-            // if (player.seatNo != turn.seatNo) {
-            //     console.log(`push_card:还没轮到你出牌`);
-            //     socket.emit(global_const.push_card, "还没轮到你出牌");
-            //     return;
-            // }
-            if (!turn.cards || turn.cards.length == 0) {
-                socket.emit(global_const.push_card, global_const.not_select_card);
-                return;
-            }
-
-            let score = rules.getSumScore(turn.cards);//当前用户手中打出的牌
-            if (!room.deskTurn) {
-                room.deskTurn = { score: 0 };
-            }
-
-            room.deskTurn.score += score;
-            room.deskTurn.nickname = turn.nickname;
-            room.deskTurn.uuid = turn.uuid;
-            room.deskTurn.seatNo = turn.seatNo;
-            room.deskTurn.cards = turn.cards;
-            //把牌从用户手里去掉
-            player.pushCard(turn.cards);
-            if (player.isPushOver()) {
-                room.overNo++;
-                player.overNo = room.overNo;
-            }
-
-            if (room.overNo > 1) {
-                //两个玩家出去要判断游戏是否可以结束
-            }
-        }
-        //todo:turn.score 计算打出的牌带了多少分数
-        //出牌顺序交给下家
-        turn.seatNo = nextNo;
-        turn.deskTurn = room.deskTurn;
-        turn.gameInfo = room.getPlayerGameInfo();
-        console.log(`push_card_over ${JSON.stringify(turn)}`);
-
-        room.players.forEach(p => {
-            p.getSocket().emit(global_const.push_card, null, turn);
-        });
-
+        room.pushCard(turn,socket);
     });
+
     socket.on('disconnect', function () {
         var room = getPlayerRoom();
         if (room) {
