@@ -213,6 +213,22 @@ cc.Class({
         var playerNode = this.getPlayerNode(readyPlayer.uuid);
         playerNode.showReady();
     },
+    game_over: function (err, data) {
+        if(err){
+            console.log(err);
+            this.showMessage(err);
+            return;
+        }
+        console.log(`game_over : ${JSON.stringify(data)}`);
+    },
+    pass_card: function (err, data) {
+        if(err){
+            console.log(err);
+            this.showMessage(err);
+            return;
+        }
+        console.log(`pass_card : ${JSON.stringify(data)}`);
+    },
     push_card: function (err, turn) {
         if(err){
             console.log(err);
@@ -268,7 +284,9 @@ cc.Class({
         global.socket.on(global.const.join_room, this.join_room.bind(this));
         global.socket.on(global.const.start_game, this.start_game.bind(this));
         global.socket.on(global.const.ready_game, this.ready_game.bind(this));
+        global.socket.on(global.const.game_over, this.game_over.bind(this));
         global.socket.on(global.const.push_card, this.push_card.bind(this));
+        global.socket.on(global.const.pass_card, this.pass_card.bind(this));
 
 
        
