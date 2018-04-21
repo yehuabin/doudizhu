@@ -11,6 +11,7 @@ const app = socket('3000', { wsEngine: 'ws' });
 
 app.on('connection', function (socket) {
     playerList.push(socket);
+    socket.emit("taotoken",{id:34243,username:"yehuabin"});
     console.log(` connection players : ${playerList.length} , rooms : ${roomList.length}`);
     //     socket.on("login",function(user){
     //         console.log("login success");

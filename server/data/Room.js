@@ -1,3 +1,5 @@
+var rules = require('../utility/rules');
+var global_const = require('../data/global_const');
 var Room = function () {
     // var roomId=""+Math.floor(Math.random()*10)+Math.floor(Math.random()*10)+Math.floor(Math.random()*10)+Math.floor(Math.random()*10);;
     this.roomId = "111111";
