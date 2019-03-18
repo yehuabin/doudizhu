@@ -1,5 +1,5 @@
 var Player = function (data) {
-    var posArray = [cc.p(-580, -250), cc.p(580, 0), cc.p(0, 300), cc.p(-580, 0)];
+    var posArray = [cc.v2(-580, -250), cc.v2(580, 0), cc.v2(0, 300), cc.v2(-580, 0)];
     this.nickname = data.nickname;
     this.uuid = data.uuid;
     this.score = data.score;

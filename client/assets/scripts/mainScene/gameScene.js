@@ -40,7 +40,7 @@ cc.Class({
             }
             var card=this.cardList[i];
             var box = card.prefab.getBoundingBox();
-            if (cc.rectContainsPoint(box, touch)) {
+            if (box.contains(touch)) {
                 card.select();
                 return card;
             }
@@ -193,11 +193,11 @@ cc.Class({
             cardPre.parent = this.cardMask;
             this.cardList.push(new Card(cards[i].no, cards[i].shape, cardPre, this.cardsSpriteAtlas));
             if (i < 21) {
-                cardPre.position = cc.p(180+ i * 51, 80);
+                cardPre.position = cc.v2(180+ i * 51, 80);
                 cardPre.zIndex = 2;
             }
             else {
-                cardPre.position = cc.p(180+ (i - 21) * 51, 180);
+                cardPre.position = cc.v2(180+ (i - 21) * 51, 180);
                 cardPre.zIndex = 1;
             }
         }
@@ -221,14 +221,6 @@ cc.Class({
         }
         console.log(`game_over : ${JSON.stringify(data)}`);
     },
-    pass_card: function (err, data) {
-        if(err){
-            console.log(err);
-            this.showMessage(err);
-            return;
-        }
-        console.log(`pass_card : ${JSON.stringify(data)}`);
-    },
     push_card: function (err, turn) {
         if(err){
             console.log(err);
@@ -240,12 +232,12 @@ cc.Class({
         console.log(`push_card : ${JSON.stringify(turn)}`);
         if (turn.seatNo == global.player.seatNo) {
             this.pushBtn.active = true;
-            if(!turn.deskTurn||turn.deskTurn.seatNo!=global.player.seatNo){
+            if(!turn.isJiefeng&&(!turn.deskTurn||turn.deskTurn.seatNo!=global.player.seatNo)){
                 this.passBtn.active = true;
             }
         }
         if(turn.deskTurn){
-            this.deskLabel.string=turn.deskTurn.nickname;
+            this.deskLabel.string=turn.deskTurn.nickname+"("+turn.deskTurn.score+"分)";
         }
         this.displayTimer(turn.seatNo);
         if (turn.pass) {
@@ -260,7 +252,7 @@ cc.Class({
         //自己不需要该效果
         for (let i = 0; i < turn.cards.length; i++) {
             var cardPre = cc.instantiate(this.cardPrefab);
-            cardPre.position = cc.p(50 * i, 0);
+            cardPre.position = cc.v2(50 * i, 0);
             cardPre.parent = this.pushCardsContainer;
             var card = new Card(turn.cards[i].no, turn.cards[i].shape, cardPre, this.cardsSpriteAtlas);
 
@@ -286,7 +278,6 @@ cc.Class({
         global.socket.on(global.const.ready_game, this.ready_game.bind(this));
         global.socket.on(global.const.game_over, this.game_over.bind(this));
         global.socket.on(global.const.push_card, this.push_card.bind(this));
-        global.socket.on(global.const.pass_card, this.pass_card.bind(this));
 
 
        
@@ -321,31 +312,35 @@ cc.Class({
                         }
                     });
                     if(selectedCards.length==0){
+                        //没有选择任何一张牌
                         this.showMessage(global.const.not_select_card);
                         return;
                     }
-                    // if(!rules.isValid(selectedCards)){
-                    //     this.showMessage(global.const.not_match_rule);
-                    //     return;
-                    // }
+
+                    if(!rules.isValid(selectedCards)){
+                        //出牌不符合规则
+                        this.showMessage(global.const.not_match_rule);
+                        return;
+                    }
 
                     //出牌前先跟桌上的牌比较大小
-                    // if(this.deskTurn&&this.deskTurn.seatNo!=global.player.seatNo){
-                    //     if(!rules.isBig(selectedCards,this.deskTurn.cards)){
-                    //         this.showMessage(global.const.not_big_rule);
-                    //         return;
-                    //     }
-                    // }
+                    if(this.deskTurn&&this.deskTurn.seatNo!=global.player.seatNo){
+                        if(!rules.isBig(selectedCards,this.deskTurn.cards)){
+                            this.showMessage(global.const.not_big_rule);
+                            return;
+                        }
+                    }
+
                     this.pushCardsContainer.removeAllChildren();
                     for (let i = 0; i < selectedCards.length; i++) {
                         const card = selectedCards[i];
                         tools.splice(this.cardList, card);
-                        card.prefab.position = cc.p(50 * i, 0);
+                        card.prefab.position = cc.v2(50 * i, 0);
                         card.prefab.zIndex = 1;
                         card.prefab.parent = this.pushCardsContainer;
 
                         // if (card.getSelect()) {
-                        //     var moveTo = cc.moveTo(0.1, cc.p(-450 + i * 51, 0));
+                        //     var moveTo = cc.moveTo(0.1, cc.v2(-450 + i * 51, 0));
                         //     card.prefab.runAction(moveTo);
                         //     card.pushCard();
                         // }
@@ -358,10 +353,10 @@ cc.Class({
                         let moveTo;
                         if (i < 21) {
                             cardPre.zIndex = i + 1;
-                            moveTo = cc.moveTo(0.1, cc.p(180 + i * 51, 80));
+                            moveTo = cc.moveTo(0.1, cc.v2(180 + i * 51, 80));
                         }
                         else {
-                            moveTo = cc.moveTo(0.1, cc.p(180 + (i - 21) * 51, 180));
+                            moveTo = cc.moveTo(0.1, cc.v2(180 + (i - 21) * 51, 180));
                             cardPre.zIndex = 0
                         }
                         cardPre.runAction(moveTo);

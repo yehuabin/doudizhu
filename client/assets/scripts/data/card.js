@@ -32,11 +32,11 @@ var Card = function (no, shape, cardPrefab, cardsSpriteAtlas) {
         var pos = event.target.position;
         _selected = !_selected;
         if (_selected) {
-            var moveTo = cc.moveTo(0.1, cc.p(pos.x, pos.y + 20));
+            var moveTo = cc.moveTo(0.1, cc.v2(pos.x, pos.y + 20));
             event.target.runAction(moveTo);
         }
         else {
-            var moveTo = cc.moveTo(0.1, cc.p(pos.x, pos.y - 20));
+            var moveTo = cc.moveTo(0.1, cc.v2(pos.x, pos.y - 20));
             event.target.runAction(moveTo);
         }
     };
@@ -75,11 +75,11 @@ Card.prototype.setNo = function () {
     var image = "GameCard-card_";
     if (this.no == 14) {
         image = "GameCard-card_wangtag_1";
-        no_node.getComponent(cc.Sprite).node.setPositionY(0);
+        no_node.getComponent(cc.Sprite).node.y=0;
     }
     else if (this.no == 15) {
         image = "GameCard-card_wangtag_2";
-        no_node.getComponent(cc.Sprite).node.setPositionY(0);
+        no_node.getComponent(cc.Sprite).node.y=0;
     }
     else {
         if (this.shape == global_const.card_shapes[0] || this.shape == global_const.card_shapes[2]) {

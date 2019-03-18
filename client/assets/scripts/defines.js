@@ -12,4 +12,4 @@ defines.gameConfig = {
 // export default defines;
 window.defines = defines;
 window.global = {};
-window.global.player = { uuid: Math.floor(Math.random() * 100) + Math.floor(Math.random() * 100) + "", nickname: "yhb" + Math.floor(Math.random() * 100) };
+window.global.player = { uuid: Math.floor(Math.random() * 100) + Math.floor(Math.random() * 100) + "", nickname: "玩家" + Math.floor(Math.random() * 100) };

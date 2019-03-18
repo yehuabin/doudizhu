@@ -141,15 +141,16 @@ Room.prototype.pushCard = function (turn, socket) {
     if (turn.pass) {
 
         var isLastNo = false;
+        var bigSeatNo= room.deskTurn.seatNo;
 
         for (var i = 1; i < this.maxPlayerNo; i++) {
             nextNo = (turn.seatNo + i) % this.maxPlayerNo;
-            if (nextNo == turn.seatNo) {
+            if (nextNo ==bigSeatNo) {
                 //最后一位不出
                 isLastNo = true;
                 break;
             }
-            if (this.players[nextNo].overNo != 0) {
+            if (this.players[nextNo].overNo == 0) {
                 //不是最后一位
                 break;
             }
@@ -157,16 +158,16 @@ Room.prototype.pushCard = function (turn, socket) {
 
         //如果是最后一位不出，把分数给大的玩家
         if (isLastNo) {
-            room.players[turn.seatNo].score += room.deskTurn.score;
+            room.players[bigSeatNo].score += room.deskTurn.score;
             room.deskTurn.score = 0;
 
-            if (room.players[turn.seatNo].isPushOver()) {
+            if (room.players[bigSeatNo].isPushOver()) {
                 room.overNo++;
-                room.players[turn.seatNo].overNo = room.overNo;
+                room.players[bigSeatNo].overNo = room.overNo;
                 //判断游戏是否结束
 
 
-                nextNo = room.getNextPushNo(turn.seatNo);
+                nextNo = room.getNextPushNo(bigSeatNo);
                 turn.isJiefeng = true;
 
             }
