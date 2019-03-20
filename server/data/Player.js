@@ -32,6 +32,12 @@ var Player = function (data) {
 Player.prototype.ready=function () {
     this.state="ready";
 }
+Player.prototype.init=function () {
+    this.overNo=0;
+    this.score=0;
+    this.state="wait_ready";
+    this.cards = [];
+}
 Player.prototype.isPushOver=function () {
     return this.cards.length==0;
 }

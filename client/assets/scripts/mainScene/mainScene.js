@@ -7,18 +7,26 @@ cc.Class({
 
     properties: {
         dialogPrefab: cc.Prefab,
+        loginPrefab: cc.Prefab,
         inputRoomNoPrefab: cc.Prefab
     },
 
     // LIFE-CYCLE CALLBACKS:
 
     onLoad() {
-
+        window.document.title='文成三星';
         global.socket.init();
         // this.dialog = cc.instantiate(this.dialogPrefab);
         // this.dialog.parent = this.node;
 
-
+        if(!localStorage["nickname"]){
+            this.loginPrefab = cc.instantiate(this.loginPrefab);
+            this.loginPrefab.parent = this.node;
+        }
+        else{
+            global.player.nickname =localStorage["nickname"];
+        } 
+        global.player.uuid= global.player.nickname;
         global.socket.on(global.const.create_room, function (err, ret) {
             if (!err) {
                 global.player.roomId = ret.roomId;

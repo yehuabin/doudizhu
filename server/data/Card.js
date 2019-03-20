@@ -2,7 +2,6 @@ var global_const = require('./global_const');
 var Card=function(no,shape){
     this.shape=shape;
     this.no=no;
-   
  }
  Card.prototype.getCompareNo=function(){
      

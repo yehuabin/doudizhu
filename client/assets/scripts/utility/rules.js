@@ -15,6 +15,10 @@ var rules = {
         }
         else {
             if (!this.isSX(c2)) {
+                if (c1.length < 4 && c1.length != c2.length) {
+                    //防止888>88>8
+                    return false;
+                }
                 //比较都不是三星的情况
                 if (c1.length == 1 && c2.length == 1 && n1 > n2) {
                     return true;
@@ -47,9 +51,10 @@ var rules = {
                                 return true;
                             }
                             //同花顺比较大小
-                            if (c2[0].no != 1 && c1[0].no > c2[0].no) {
+                            if (c1[c1.length-1].no > c2[c2.length-1].no) {
                                 return true;
                             }
+ 
                         }
                         else if (!isT2 && n1 > n2) {
                             //长度一样，c2不是同花顺，且点数比c1小
@@ -119,10 +124,9 @@ var rules = {
         let j = 0;
         if (cards[0].no == 1) {
             //第一张是A
-            //最后一张一定是K
+            //最后一张一定是K或者12345顺子
             if (cards[cards.length - 1].no != 13
-                || cards[cards.length - 1].shape != cards[0].shape
-            ) {
+                && cards[cards.length - 1].no != cards.length) {
                 return false;
             }
             j = 1;

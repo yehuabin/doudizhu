@@ -31,6 +31,15 @@ Room.prototype.setTurn = function (seatNo, isWin, preCards) {
         preCards: preCards//上家出的牌
     };
 }
+Room.prototype.init = function () {
+    this.overNo = 0;
+    this.deskTurn = null;
+    this.turn = {};
+    for (let i = 0; i < this.players.length; i++) {
+        const player = this.players[i];
+        player.init();
+    }
+}
 Room.prototype.getPlayer = function (socket) {
     var index = this.players.map(function (e) { return e.getSocket(); }).indexOf(socket);
     return this.players[index];
@@ -77,7 +86,7 @@ Room.prototype.addPlayer = function (player) {
             }
         }
         this.players.splice(index, 0, player);
-        console.log(JSON.stringify(this.players));
+       // console.log(JSON.stringify(this.players));
     }
 }
 
@@ -92,9 +101,33 @@ Room.prototype.getNextPushNo = function (no) {
     console.log("err:没有找到下家出牌的玩家");
     return nextNo;
 }
+Room.prototype.getFriendNo = function (no) {
+    return (no + 2) % this.maxPlayerNo;
+}
+Room.prototype.getFriend = function (no) {
+    let friNo=this.getFriendNo(no);
+    let friend=null;
+    this.players.forEach(p => {
+       if(p.seatNo==friNo){
+           friend=p;
+       }
+    });
+    return friend;
+}
+Room.prototype.getPlayerBySeatNo = function (no) {
+     let player=null;
+    this.players.forEach(p => {
+       if(p.seatNo==no){
+        player=p;
+       }
+    });
+    return player;
+}
 Room.prototype.isGameOver = function () {
     var isOver = false;
+
     if (this.overNo < 2) {
+        //只逃走一个玩家继续玩
         return isOver;
     }
     var p1 = [];
@@ -111,22 +144,22 @@ Room.prototype.isGameOver = function () {
             }
         }
     }
-     
-    if(p1.length==this.maxPlayerNo/2||p2.length==this.maxPlayerNo/2){
-        isOver=true;//扣了就结束
+
+    if (p1.length == this.maxPlayerNo / 2 || p2.length == this.maxPlayerNo / 2) {
+        isOver = true;//扣了就结束
     }
-    else{
-        var s1=0;
-        var s2=0;
+    else {
+        var s1 = 0;
+        var s2 = 0;
         for (let i = 0; i < p1.length; i++) {
-            s1+= p1[i].score;
+            s1 += p1[i].score;
         }
         for (let i = 0; i < p2.length; i++) {
-            s2+= p2[i].score;
+            s2 += p2[i].score;
         }
-        if(p1.length>0&&p2.length>0&&
-        (s1>150||s2>150)){
-            isOver=true;//两边都有人逃出，赢分了就结束
+        if (p1.length > 0 && p2.length > 0 &&
+            (s1 > 150 || s2 > 150)) {
+            isOver = true;//两边都有人逃出，赢分了就结束
         }
     }
     return isOver;
@@ -134,18 +167,18 @@ Room.prototype.isGameOver = function () {
 Room.prototype.pushCard = function (turn, socket) {
     var room = this;
 
-    console.log(`push_card:${JSON.stringify(turn)} ` + socket.nickname);
+    //console.log(`push_card:${JSON.stringify(turn)} ` + socket.nickname);
     var player = room.getPlayer(socket);
     var nextNo = -1;
 
     if (turn.pass) {
 
         var isLastNo = false;
-        var bigSeatNo= room.deskTurn.seatNo;
+        var bigSeatNo = room.deskTurn.seatNo;
 
         for (var i = 1; i < this.maxPlayerNo; i++) {
             nextNo = (turn.seatNo + i) % this.maxPlayerNo;
-            if (nextNo ==bigSeatNo) {
+            if (nextNo == bigSeatNo) {
                 //最后一位不出
                 isLastNo = true;
                 break;
@@ -162,14 +195,18 @@ Room.prototype.pushCard = function (turn, socket) {
             room.deskTurn.score = 0;
 
             if (room.players[bigSeatNo].isPushOver()) {
-                room.overNo++;
-                room.players[bigSeatNo].overNo = room.overNo;
+                // room.overNo++;
+                // room.players[bigSeatNo].overNo = room.overNo;
                 //判断游戏是否结束
 
 
-                nextNo = room.getNextPushNo(bigSeatNo);
+                //接风给对家
+                nextNo = room.getFriendNo(bigSeatNo);
                 turn.isJiefeng = true;
-
+                room.deskTurn.isJiefeng = true;
+                //逃出去就可以看到对家的牌
+                let go_player= this.getPlayerBySeatNo(bigSeatNo);
+                go_player.getSocket().emit(global_const.watch_fri,null,this.getPlayerBySeatNo(nextNo).cards)
             }
 
             // if(room.players[nextNo].cards.length==0){
@@ -181,7 +218,7 @@ Room.prototype.pushCard = function (turn, socket) {
 
     }
     else {
-        nextNo=room.getNextPushNo(turn.seatNo);
+        nextNo = room.getNextPushNo(turn.seatNo);
         // if (player.seatNo != turn.seatNo) {
         //     console.log(`push_card:还没轮到你出牌`);
         //     socket.emit(global_const.push_card, "还没轮到你出牌");
@@ -218,11 +255,21 @@ Room.prototype.pushCard = function (turn, socket) {
     turn.seatNo = nextNo;
     turn.deskTurn = room.deskTurn;
     turn.gameInfo = room.getPlayerGameInfo();
-    console.log(`push_card_over ${JSON.stringify(turn)}`);
+    // console.log(`push_card_over ${JSON.stringify(turn)}`);
 
-    room.players.forEach(p => {
-        p.getSocket().emit(global_const.push_card, null, turn);
-    });
+    if (room.isGameOver()) {
+        room.init();
+        room.players.forEach(p => {
+            p.getSocket().emit(global_const.game_over, null, turn);
+        });
+    }
+    else {
+        room.players.forEach(p => {
+            p.getSocket().emit(global_const.push_card, null, turn);
+        });
+    }
+
+
 
 }
 

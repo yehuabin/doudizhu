@@ -1,16 +1,11 @@
 {
-  "appKey": "",
-  "appSecret": "",
   "encryptJs": true,
   "excludeScenes": [],
-  "includeAnySDK": false,
   "includeSDKBox": false,
   "inlineSpriteFrames": true,
   "inlineSpriteFrames_native": false,
-  "jailbreakPlatform": false,
   "md5Cache": true,
   "mergeStartScene": false,
-  "oauthLoginServer": "",
   "optimizeHotUpdate": false,
   "orientation": {
     "landscapeLeft": true,
@@ -19,8 +14,6 @@
     "upsideDown": false
   },
   "packageName": "org.yehuabin.sanxing",
-  "privateKey": "",
-  "renderMode": "0",
   "startScene": "13ce60cd-ad32-4d67-8d75-0ce4b032666b",
   "title": "sanxing",
   "webOrientation": "landscape",
@@ -29,5 +22,26 @@
     "orientation": "portrait"
   },
   "xxteaKey": "ad5e196d-8ec0-48",
-  "zipCompressJs": true
+  "zipCompressJs": true,
+  "baidugame": {
+    "appid": "testappid",
+    "orientation": "portrait",
+    "REMOTE_SERVER_ROOT": "",
+    "subContext": ""
+  },
+  "qqplay": {
+    "orientation": "portrait",
+    "zip": false,
+    "REMOTE_SERVER_ROOT": ""
+  },
+  "fb-instant-games": {},
+  "android-instant": {
+    "REMOTE_SERVER_ROOT": "",
+    "pathPattern": "",
+    "scheme": "https",
+    "host": "",
+    "skipRecord": false,
+    "recordPath": ""
+  },
+  "appBundle": false
 }

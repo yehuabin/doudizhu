@@ -11,7 +11,7 @@ const app = socket('3000', { wsEngine: 'ws' });
 
 app.on('connection', function (socket) {
     playerList.push(socket);
-    socket.emit("taotoken",{id:34243,username:"yehuabin"});
+    
     console.log(` connection players : ${playerList.length} , rooms : ${roomList.length}`);
     //     socket.on("login",function(user){
     //         console.log("login success");
@@ -32,6 +32,12 @@ app.on('connection', function (socket) {
         player.isCreator = true;
 
         room.addPlayer(player);
+        for (let i = 0; i < roomList.length; i++) {
+            const r = roomList[i];
+            if(r.roomId==room.roomId){
+                return;
+            }
+        }
         roomList.push(room);
         socket.roomId = room.roomId;
         socket.uuid = user.uuid;
@@ -59,7 +65,12 @@ app.on('connection', function (socket) {
         }
         else {
             var player = new Player({ nickname: joinRoomData.nickname, uuid: joinRoomData.uuid, socket: socket });
-
+            for (let i = 0; i < room.players.length; i++) {
+                const p = room.players[i];
+                if(p.nickname==joinRoomData.nickname){
+                    return;
+                }
+            }
             for (let i = 0; i < room.seatNos.length; i++) {
 
                 if (room.seatNos[i][1] == 0) {
@@ -131,28 +142,40 @@ app.on('connection', function (socket) {
             }
 
             var randomCardList = [];
-            while (cardList.length > 0) {
-                var index = Math.floor((Math.random() * cardList.length));
-                randomCardList.push(cardList[index]);
-                cardList.splice(index, 1);
-            }
-
+            // while (cardList.length > 0) {
+            //     var index = Math.floor((Math.random() * cardList.length));
+            //     randomCardList.push(cardList[index]);
+            //     cardList.splice(index, 1);
+            // }
+            // var randomCardList2 = [];
+            // while (randomCardList.length > 0) {
+            //     var index = Math.floor((Math.random() * randomCardList.length));
+            //     randomCardList2.push(randomCardList[index]);
+            //     randomCardList.splice(index, 1);
+            // }
+            // randomCardList=randomCardList2;
+            randomCardList=tools.shuffle(cardList);
+            randomCardList=tools.shuffle(randomCardList);
+            randomCardList=tools.shuffle(randomCardList);
+            randomCardList=tools.shuffle(randomCardList);
+            randomCardList=tools.shuffle(randomCardList);
+            randomCardList=tools.shuffle(randomCardList);
             var count = randomCardList.length;
             while (count > 0) {
-                let i = count % 4;
+                let i = count % room.maxPlayerNo;
                 room.players[i].addCard(randomCardList[0]);
                 randomCardList.splice(0, 1);
                 count--;
 
             }
 
-            //var startNo=Math.floor(Math.random()*room.players.length);
-            var startNo = 0;
+            //第一个人随机出牌
+            var startNo=Math.floor(Math.random()*room.players.length);
+            //var startNo = 0;
             room.setTurn(startNo, true);
-            console.log(`start_game ` + room.players[0].cards.length + JSON.stringify(room.players[0].cards));
             // socket.emit(global_const.start_game,null,room.players[0].cards);
             room.players.forEach(player => {
-                player.getSocket().emit(global_const.start_game, null, { startNo: startNo, cards: player.cards });
+                player.getSocket().emit(global_const.start_game, null, { startNo: startNo, cards: player.cards,gameInfo:room.getPlayerGameInfo() });
             });
         }
     });
@@ -204,7 +227,7 @@ app.on('connection', function (socket) {
 
         }
 
-        console.log(`start_game ` + room.players[0].cards.length + JSON.stringify(room.players[0].cards));
+        //console.log(`start_game cards.length:` + room.players[0].cards.length );
         // socket.emit(global_const.start_game,null,room.players[0].cards);
         room.players.forEach(player => {
             player.getSocket().emit(global_const.start_game, null, player.cards);
