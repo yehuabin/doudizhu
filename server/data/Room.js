@@ -24,6 +24,14 @@ Room.prototype.leaveRoom = function (socket) {
 Room.prototype.playing = function () {
     this.state = "playing";
 }
+Room.prototype.isPlaying = function () {
+    return this.state == "playing";
+}
+Room.prototype.offLine = function (socket) {
+    var index = this.players.map(function (e) { return e.getSocket(); }).indexOf(socket);
+    var player = this.players[index];
+    player.offLine();
+}
 Room.prototype.setTurn = function (seatNo, isWin, preCards) {
     this.turn = {
         seatNo: seatNo,//出牌座位号
@@ -33,6 +41,7 @@ Room.prototype.setTurn = function (seatNo, isWin, preCards) {
 }
 Room.prototype.init = function () {
     this.overNo = 0;
+    this.state = "wait";
     this.deskTurn = null;
     this.turn = {};
     for (let i = 0; i < this.players.length; i++) {
@@ -44,6 +53,14 @@ Room.prototype.getPlayer = function (socket) {
     var index = this.players.map(function (e) { return e.getSocket(); }).indexOf(socket);
     return this.players[index];
 }
+// Room.prototype.getPlayerByUUID = function (uuid) {
+//     var index = this.players.map(function (e) { return e.uuid; }).indexOf(uuid);
+//     return this.players[index];
+// }
+// Room.prototype.reConnection = function (socket) {
+//     var index = this.players.map(function (e) { return e.uuid; }).indexOf(socket.uuid);
+//     return this.players[index].onLine(socket);
+// }
 Room.prototype.getPlayerGameInfo = function () {
     var result = [];
     for (let i = 0; i < this.players.length; i++) {
@@ -86,7 +103,7 @@ Room.prototype.addPlayer = function (player) {
             }
         }
         this.players.splice(index, 0, player);
-       // console.log(JSON.stringify(this.players));
+        // console.log(JSON.stringify(this.players));
     }
 }
 
@@ -105,21 +122,21 @@ Room.prototype.getFriendNo = function (no) {
     return (no + 2) % this.maxPlayerNo;
 }
 Room.prototype.getFriend = function (no) {
-    let friNo=this.getFriendNo(no);
-    let friend=null;
+    let friNo = this.getFriendNo(no);
+    let friend = null;
     this.players.forEach(p => {
-       if(p.seatNo==friNo){
-           friend=p;
-       }
+        if (p.seatNo == friNo) {
+            friend = p;
+        }
     });
     return friend;
 }
 Room.prototype.getPlayerBySeatNo = function (no) {
-     let player=null;
+    let player = null;
     this.players.forEach(p => {
-       if(p.seatNo==no){
-        player=p;
-       }
+        if (p.seatNo == no) {
+            player = p;
+        }
     });
     return player;
 }
@@ -130,42 +147,44 @@ Room.prototype.isGameOver = function () {
         //只逃走一个玩家继续玩
         return isOver;
     }
-    var p1 = [];
-    var p2 = [];
-
-    for (let i = 0; i < this.maxPlayerNo; i++) {
-        const p = this.players[i];
-        if (p.overNo >= 0) {
-            if (i % 2 == 0) {
-                p1.push(p);
-            }
-            else {
-                p2.push(p);
-            }
-        }
-    }
-
-    if (p1.length == this.maxPlayerNo / 2 || p2.length == this.maxPlayerNo / 2) {
-        isOver = true;//扣了就结束
+   
+    if ((this.players[0].overNo>0&&this.players[2].overNo>0) || 
+    (this.players[1].overNo>0&&this.players[3].overNo>0) ) {
+        isOver = true;//两家都逃出了就结束
     }
     else {
-        var s1 = 0;
-        var s2 = 0;
-        for (let i = 0; i < p1.length; i++) {
-            s1 += p1[i].score;
+
+        let s1 = 0;
+        let s2 = 0;
+        let no1Seat = 0;
+        for (let i = 0; i < this.players.length; i++) {
+            let player = this.players[i];
+            if (player.overNo == 1) {
+                //找到第一名的人
+                no1Seat = i;
+                break;
+            }
         }
-        for (let i = 0; i < p2.length; i++) {
-            s2 += p2[i].score;
+        //第一名玩家分数加上对家分数
+        s1 = this.players[no1Seat].score + this.players[(no1Seat + 2) % 4].score;
+
+        for (let i = 1; i < 4;) {
+            let index = (no1Seat + i) % 4;
+            if (this.players[index].overNo > 0) {
+                s2 += this.players[index].score;
+            }
+            i = i + 2;
         }
-        if (p1.length > 0 && p2.length > 0 &&
-            (s1 > 150 || s2 > 150)) {
-            isOver = true;//两边都有人逃出，赢分了就结束
+
+        if (s1 > 150 || s2 > 150) {
+            isOver = true;
         }
     }
     return isOver;
 }
 Room.prototype.pushCard = function (turn, socket) {
     var room = this;
+
 
     //console.log(`push_card:${JSON.stringify(turn)} ` + socket.nickname);
     var player = room.getPlayer(socket);
@@ -204,9 +223,7 @@ Room.prototype.pushCard = function (turn, socket) {
                 nextNo = room.getFriendNo(bigSeatNo);
                 turn.isJiefeng = true;
                 room.deskTurn.isJiefeng = true;
-                //逃出去就可以看到对家的牌
-                let go_player= this.getPlayerBySeatNo(bigSeatNo);
-                go_player.getSocket().emit(global_const.watch_fri,null,this.getPlayerBySeatNo(nextNo).cards)
+               
             }
 
             // if(room.players[nextNo].cards.length==0){
@@ -244,6 +261,11 @@ Room.prototype.pushCard = function (turn, socket) {
         if (player.isPushOver()) {
             room.overNo++;
             player.overNo = room.overNo;
+            room.deskTurn.overNo=room.overNo;//提示逃走是第几家
+
+             //逃出去就可以看到对家的牌
+             let go_player = this.getPlayerBySeatNo(turn.seatNo);
+             go_player.getSocket().emit(global_const.watch_fri, null, this.getFriend(turn.seatNo).cards)
         }
 
         //倒数第二家逃出就直接给分
@@ -252,25 +274,21 @@ Room.prototype.pushCard = function (turn, socket) {
     }
     //todo:turn.score 计算打出的牌带了多少分数
     //出牌顺序交给下家
+    turn.preSeatNo = turn.seatNo;
     turn.seatNo = nextNo;
     turn.deskTurn = room.deskTurn;
     turn.gameInfo = room.getPlayerGameInfo();
-    // console.log(`push_card_over ${JSON.stringify(turn)}`);
+     console.log(`push_card_over ${JSON.stringify(turn)}`);
+
 
     if (room.isGameOver()) {
+        turn.isGameOver = true;
         room.init();
-        room.players.forEach(p => {
-            p.getSocket().emit(global_const.game_over, null, turn);
-        });
-    }
-    else {
-        room.players.forEach(p => {
-            p.getSocket().emit(global_const.push_card, null, turn);
-        });
     }
 
-
-
+    room.players.forEach(p => {
+        p.getSocket().emit(global_const.push_card, null, turn);
+    });
 }
 
 module.exports = Room;

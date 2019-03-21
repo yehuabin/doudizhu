@@ -56,10 +56,23 @@ app.on('connection', function (socket) {
     socket.on(global_const.apply_join_room, function (joinRoomData) {
         var room = getPlayerRoom(joinRoomData.roomId);
         var err = null;
+        let reConnectionPlayerIndex=room.players.map(function (e) { return e.uuid; }).indexOf(joinRoomData.uuid);
         var ret = {};
         if (!room) {
             err = "房间不存在：" + joinRoomData.roomId;
         }
+        // else if(reConnectionPlayerIndex>-1){
+
+        //     let reConnectionPlayer=room.players[reConnectionPlayerIndex];
+        //     //断线重连
+        //     socket.roomId = room.roomId;
+        //     socket.nickname = joinRoomData.nickname;
+        //     socket.uuid = joinRoomData.uuid;
+        //     reConnectionPlayer.onLine(socket);
+        //     socket.emit(global_const.apply_join_room, err, {roomId:room.roomId,seatNo:reConnectionPlayer.seatNo});
+        //     return;
+
+        // }
         else if (room.isFull()) {
             err = "房间已经满了";
         }
@@ -170,8 +183,8 @@ app.on('connection', function (socket) {
             }
 
             //第一个人随机出牌
-            var startNo=Math.floor(Math.random()*room.players.length);
-            //var startNo = 0;
+            //var startNo=Math.floor(Math.random()*room.players.length);
+            var startNo = 0;
             room.setTurn(startNo, true);
             // socket.emit(global_const.start_game,null,room.players[0].cards);
             room.players.forEach(player => {
@@ -243,15 +256,22 @@ app.on('connection', function (socket) {
         var room = getPlayerRoom();
         if (room) {
 
-            room.leaveRoom(socket);
-            if (room.players.length == 0) {
-                tools.splice(roomList, room);
+            if(room.isPlaying){
+                //如果房间已经开始游戏，就将该用户设置为离线
+                room.offLine(socket);
             }
-            else {
-                room.players.forEach(player => {
-                    player.getSocket().emit(global_const.leave_room, null, { nickname: socket.nickname, uuid: socket.uuid });
-                });
+            else{
+                room.leaveRoom(socket);
+                if (room.players.length == 0) {
+                    tools.splice(roomList, room);
+                }
+                else {
+                    room.players.forEach(player => {
+                        player.getSocket().emit(global_const.leave_room, null, { nickname: socket.nickname, uuid: socket.uuid });
+                    });
+                }
             }
+
         }
 
         tools.splice(playerList, socket);

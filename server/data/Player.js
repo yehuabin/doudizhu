@@ -5,6 +5,7 @@ var Player = function (data) {
     var socket = data.socket;
     this.overNo=0;
     this.score=0;
+    this.isOffLine=false;
     this.seatNo = 0;
     this.state="wait_ready";//wait_ready,ready,playing,over,offline
     this.cards = [];
@@ -28,9 +29,19 @@ var Player = function (data) {
     this.getSocket = function () {
         return socket;
     }
+    this.setSocket = function () {
+        return socket;
+    }
 }
 Player.prototype.ready=function () {
     this.state="ready";
+}
+Player.prototype.offLine=function () {
+    this.isOffLine=true;
+}
+Player.prototype.onLine=function (socket) {
+    this.setSocket(socket);
+    this.isOffLine=false;
 }
 Player.prototype.init=function () {
     this.overNo=0;
