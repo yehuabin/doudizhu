@@ -1,7 +1,11 @@
 var rules = require('../utility/rules');
 var global_const = require('../data/global_const');
+let ROOM_NO=100000;
 var Room = function () {
+    ROOM_NO++;
     // var roomId=""+Math.floor(Math.random()*10)+Math.floor(Math.random()*10)+Math.floor(Math.random()*10)+Math.floor(Math.random()*10);;
+    
+    this.roomId =ROOM_NO;
     this.roomId = "111111";
     this.seatNos = [[0, 0], [1, 0], [2, 0], [3, 0]];
     this.players = [];
@@ -184,7 +188,7 @@ Room.prototype.isGameOver = function () {
 }
 Room.prototype.pushCard = function (turn, socket) {
     var room = this;
-
+    let curOverNo=0;
 
     //console.log(`push_card:${JSON.stringify(turn)} ` + socket.nickname);
     var player = room.getPlayer(socket);
@@ -261,7 +265,7 @@ Room.prototype.pushCard = function (turn, socket) {
         if (player.isPushOver()) {
             room.overNo++;
             player.overNo = room.overNo;
-            room.deskTurn.overNo=room.overNo;//提示逃走是第几家
+            curOverNo=room.overNo;//提示逃走是第几家
 
              //逃出去就可以看到对家的牌
              let go_player = this.getPlayerBySeatNo(turn.seatNo);
@@ -277,8 +281,9 @@ Room.prototype.pushCard = function (turn, socket) {
     turn.preSeatNo = turn.seatNo;
     turn.seatNo = nextNo;
     turn.deskTurn = room.deskTurn;
+    turn.deskTurn.overNo =curOverNo;
     turn.gameInfo = room.getPlayerGameInfo();
-     console.log(`push_card_over ${JSON.stringify(turn)}`);
+    // console.log(`push_card_over ${JSON.stringify(turn)}`);
 
 
     if (room.isGameOver()) {

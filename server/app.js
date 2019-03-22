@@ -7,6 +7,7 @@ var tools = require('./utility/tools');
 var rules = require('./utility/rules');
 var roomList = [];
 var playerList = [];
+
 const app = socket('3000', { wsEngine: 'ws' });
 
 app.on('connection', function (socket) {
@@ -22,6 +23,10 @@ app.on('connection', function (socket) {
 
     socket.on(global_const.create_room, function (user) {
         console.log(`create_room ${JSON.stringify(user)}`);
+        // if(roomList.length>0){
+        //     socket.emit(global_const.create_room, "目前处于测试，非管理员无法创建房间", null);
+        //     return;
+        // }
         var room = new Room();
         room.seatNos[0][1] = 1;
         var player = new Player({
@@ -56,7 +61,7 @@ app.on('connection', function (socket) {
     socket.on(global_const.apply_join_room, function (joinRoomData) {
         var room = getPlayerRoom(joinRoomData.roomId);
         var err = null;
-        let reConnectionPlayerIndex=room.players.map(function (e) { return e.uuid; }).indexOf(joinRoomData.uuid);
+       // let reConnectionPlayerIndex=room.players.map(function (e) { return e.uuid; }).indexOf(joinRoomData.uuid);
         var ret = {};
         if (!room) {
             err = "房间不存在：" + joinRoomData.roomId;
@@ -155,18 +160,7 @@ app.on('connection', function (socket) {
             }
 
             var randomCardList = [];
-            // while (cardList.length > 0) {
-            //     var index = Math.floor((Math.random() * cardList.length));
-            //     randomCardList.push(cardList[index]);
-            //     cardList.splice(index, 1);
-            // }
-            // var randomCardList2 = [];
-            // while (randomCardList.length > 0) {
-            //     var index = Math.floor((Math.random() * randomCardList.length));
-            //     randomCardList2.push(randomCardList[index]);
-            //     randomCardList.splice(index, 1);
-            // }
-            // randomCardList=randomCardList2;
+           
             randomCardList=tools.shuffle(cardList);
             randomCardList=tools.shuffle(randomCardList);
             randomCardList=tools.shuffle(randomCardList);
@@ -183,8 +177,8 @@ app.on('connection', function (socket) {
             }
 
             //第一个人随机出牌
-            //var startNo=Math.floor(Math.random()*room.players.length);
-            var startNo = 0;
+            var startNo=Math.floor(Math.random()*room.players.length);
+           // var startNo = 0;
             room.setTurn(startNo, true);
             // socket.emit(global_const.start_game,null,room.players[0].cards);
             room.players.forEach(player => {
@@ -256,9 +250,32 @@ app.on('connection', function (socket) {
         var room = getPlayerRoom();
         if (room) {
 
-            if(room.isPlaying){
+            if(room.isPlaying()){
+
+                room.leaveRoom(socket);
+                if (room.players.length == 0) {
+                    tools.splice(roomList, room);
+                }
+                else {
+                    room.players.forEach(player => {
+                        player.getSocket().emit(global_const.leave_room, null, { nickname: socket.nickname, uuid: socket.uuid,offLine:true });
+                    });
+                }
+
+                room.init();
+                return;
                 //如果房间已经开始游戏，就将该用户设置为离线
                 room.offLine(socket);
+                let allOffLine=true;
+                for (let i = 0; i < room.players.length; i++) {
+                    const player = room.players[i];
+                    if(!player.isOffLine){
+                        allOffLine=false;
+                    }
+                }
+                if(allOffLine){
+                    tools.splice(roomList, room);
+                }
             }
             else{
                 room.leaveRoom(socket);

@@ -14,25 +14,31 @@ cc.Class({
     // LIFE-CYCLE CALLBACKS:
 
     onLoad() {
-        window.document.title='文成三星';
+        window.document.title = '文成三星';
         global.socket.init();
-        // this.dialog = cc.instantiate(this.dialogPrefab);
-        // this.dialog.parent = this.node;
+        this.dialog = cc.instantiate(this.dialogPrefab);
+        this.dialog.zIndex = 100;
+        this.dialog.parent = this.node;
+        var dialog = this.dialog;
 
-        if(!localStorage["nickname"]){
-            this.loginPrefab = cc.instantiate(this.loginPrefab);
-            this.loginPrefab.parent = this.node;
-        }
-        else{
-            global.player.nickname =localStorage["nickname"];
-        } 
-        global.player.uuid= global.player.nickname;
+        // if(!localStorage["nickname"]){
+        //     this.loginPrefab = cc.instantiate(this.loginPrefab);
+        //     this.loginPrefab.parent = this.node;
+        // }
+        // else{
+        //     global.player.nickname =localStorage["nickname"];
+        // } 
+
+        global.player.uuid = global.player.nickname;
         global.socket.on(global.const.create_room, function (err, ret) {
             if (!err) {
                 global.player.roomId = ret.roomId;
                 global.player.seatNo = ret.seatNo;
                 global.player.isCreator = ret.isCreator;
                 cc.director.loadScene("gameScene");
+            }
+            else {
+                dialog.getComponent("dialog").show(err)
             }
             console.log("create_room_success: " + JSON.stringify(ret));
         });
@@ -41,9 +47,9 @@ cc.Class({
     },
     apply_join_room: function (err, data) {
         if (err) {
-            
+            this.dialog.getComponent("dialog").show(err)
             console.log(err);
-             
+
         }
         else {
             global.player.seatNo = data.seatNo;
@@ -65,13 +71,15 @@ cc.Class({
                 break;
             case global.const.apply_join_room:
 
-            global.socket.emit(global.const.apply_join_room, { roomId:"111111", nickname: global.player.nickname,
-            uuid:global.player.uuid });
-            global.socket.on(global.const.apply_join_room, this.apply_join_room.bind(this));
+                global.socket.emit(global.const.apply_join_room, { roomId:"111111", nickname: global.player.nickname,
+                uuid:global.player.uuid });
 
-                // this.inputRoomNo = cc.instantiate(this.inputRoomNoPrefab);
-                // this.inputRoomNo.parent = this.node;
-                // console.log(`玩家: ${global.player.nickname}  加入房间`);
+                this.inputRoomNo = cc.instantiate(this.inputRoomNoPrefab);
+                this.inputRoomNo.parent = this.node;
+
+
+                global.socket.on(global.const.apply_join_room, this.apply_join_room.bind(this));
+
                 break;
             case "close_dialog":
                 this.dialog.active = false;

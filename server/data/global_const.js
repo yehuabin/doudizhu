@@ -8,6 +8,7 @@ const global_const={
     //join_room_success:"join_room_success",
     sync_room:"sync_room",
     leave_room:"leave_room",
+    player_offline:"player_offline",
     push_card:"push_card",
     watch_fri:"watch_fri",
     game_over:"game_over",

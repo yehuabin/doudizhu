@@ -101,7 +101,7 @@ cc.Class({
 
         for (let i = 0; i < this.playerNodes.length; i++) {
             const playerNode = this.playerNodes[i];
-            playerNode.setGameInfo({ score: 0, overNo: 0 });
+            playerNode.init();
         }
         //桌上牌清空
         //this.pushCardsContainer.removeAllChildren();
@@ -206,6 +206,12 @@ cc.Class({
         playerNode.prefab.removeFromParent(true);
         playerNode.prefab.destroy();
         this.playerNodes.splice(this.playerNodes.indexOf(playerNode), 1);
+
+        if(data.offLine){
+            this.showMessage(`${data.nickname}断线，请重新开始`);
+            this.init();
+            this.readyBtn.node.active = true;
+        }
     },
 
     start_game: function (err, data) {
@@ -312,7 +318,6 @@ cc.Class({
         }
         this.scrollMsgLabel.string = msg;
         this.readyBtn.node.active = true;
-        console.log(`game_over `);
     },
     getPushContainer(seatNo) {
         let pushContainer = null;
@@ -343,6 +348,7 @@ cc.Class({
         this.deskTurn = turn.deskTurn;
         let curPlayer = turn.gameInfo[global.player.seatNo];//当前界面用户
         let turnPlayer = turn.gameInfo[turn.seatNo];//出牌用户
+        let nextPlayer = turn.gameInfo[(turn.preSeatNo + 1) % 4];//当前出牌用户的下家
         // console.log(`push_card : ${JSON.stringify(turn)}`);
 
 
@@ -377,28 +383,9 @@ cc.Class({
         }
         this.showGameInfo(turn);
         if (turn.isGameOver) {
-            console.log('game_over');
             this.game_over(turn.gameInfo);
             this.showMessage("本局游戏结束");
         }
-        // this.displayTimer(turn.seatNo);
-        // if (turn.pass) {
-        //     return;
-        // }
-        // var preNo = (turn.seatNo - 1 + 4) % 4;
-        // if (preNo == global.player.seatNo) {
-        //     return;
-        // }
-
-        //this.pushCardsContainer.removeAllChildren();
-        //自己不需要该效果
-        // for (let i = 0; i < turn.cards.length; i++) {
-        //     var cardPre = cc.instantiate(this.cardPrefab);
-        //     cardPre.position = cc.v2(50 * i, 0);
-        //     cardPre.parent = this.pushCardsContainer;
-        //     new Card(turn.cards[i].no, turn.cards[i].shape, cardPre, this.cardsSpriteAtlas);
-
-        // }
 
         //将牌显示在出牌人面前
         let pushContainer = this.getPushContainer(turn.preSeatNo);
@@ -408,6 +395,12 @@ cc.Class({
         waitContainer.removeAllChildren();
 
         waitContainer.addChild(this.initLable("出牌中..."))
+        if(nextPlayer.overNo>0){
+            //一圈轮完显示下家是第几家
+            let overNoContainer = this.getPushContainer(nextPlayer.seatNo);
+            overNoContainer.removeAllChildren();
+            overNoContainer.addChild(this.initLable(`第${nextPlayer.overNo}家`));
+        }
 
         if (turn.pass) {
             pushContainer.addChild(this.initLable("不出"));
@@ -472,7 +465,6 @@ cc.Class({
         global.socket.on(global.const.ready_game, this.ready_game.bind(this));
         global.socket.on(global.const.game_over, this.game_over.bind(this));
         global.socket.on(global.const.push_card, this.push_card.bind(this));
-        global.socket.on(global.const.game_over, this.game_over.bind(this));
         global.socket.on(global.const.watch_fri, this.watch_fri.bind(this));
 
 
