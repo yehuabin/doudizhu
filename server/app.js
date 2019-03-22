@@ -85,7 +85,7 @@ app.on('connection', function (socket) {
             var player = new Player({ nickname: joinRoomData.nickname, uuid: joinRoomData.uuid, socket: socket });
             for (let i = 0; i < room.players.length; i++) {
                 const p = room.players[i];
-                if(p.nickname==joinRoomData.nickname){
+                if(p.uuid==joinRoomData.uuid){
                     return;
                 }
             }
@@ -178,7 +178,7 @@ app.on('connection', function (socket) {
 
             //第一个人随机出牌
             var startNo=Math.floor(Math.random()*room.players.length);
-           // var startNo = 0;
+            //var startNo = 0;
             room.setTurn(startNo, true);
             // socket.emit(global_const.start_game,null,room.players[0].cards);
             room.players.forEach(player => {

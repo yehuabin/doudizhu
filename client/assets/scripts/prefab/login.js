@@ -11,7 +11,7 @@ cc.Class({
             case "save":
                 if (this.userNameEdit.string) {
                     global.player.nickname = this.userNameEdit.string;
-                    global.player.uuid= global.player.nickname;
+                   
                     localStorage["nickname"]=this.userNameEdit.string;
                     this.node.destroy();
                 }

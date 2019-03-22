@@ -47,7 +47,6 @@ cc.Class({
             for (let i = 0; i < this.roomNoLabel.length; i++) {
                 this.roomNoLabel[i].string = "";
             }
-            console.log(err);
             this.tipLabel.node.opacity = 255;
             this.tipLabel.string = err;
             this.roomNos = "";

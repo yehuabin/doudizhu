@@ -21,15 +21,14 @@ cc.Class({
         this.dialog.parent = this.node;
         var dialog = this.dialog;
 
-        // if(!localStorage["nickname"]){
-        //     this.loginPrefab = cc.instantiate(this.loginPrefab);
-        //     this.loginPrefab.parent = this.node;
-        // }
-        // else{
-        //     global.player.nickname =localStorage["nickname"];
-        // } 
+        if(!localStorage["nickname"]){
+            this.loginPrefab = cc.instantiate(this.loginPrefab);
+            this.loginPrefab.parent = this.node;
+        }
+        else{
+            global.player.nickname =localStorage["nickname"];
+        } 
 
-        global.player.uuid = global.player.nickname;
         global.socket.on(global.const.create_room, function (err, ret) {
             if (!err) {
                 global.player.roomId = ret.roomId;
@@ -47,7 +46,7 @@ cc.Class({
     },
     apply_join_room: function (err, data) {
         if (err) {
-            this.dialog.getComponent("dialog").show(err)
+            //this.dialog.getComponent("dialog").show(err)
             console.log(err);
 
         }
@@ -71,13 +70,12 @@ cc.Class({
                 break;
             case global.const.apply_join_room:
 
-                global.socket.emit(global.const.apply_join_room, { roomId:"111111", nickname: global.player.nickname,
-                uuid:global.player.uuid });
+                // global.socket.emit(global.const.apply_join_room, { roomId:"111111", nickname: global.player.nickname,
+                // uuid:global.player.uuid });
 
                 this.inputRoomNo = cc.instantiate(this.inputRoomNoPrefab);
                 this.inputRoomNo.parent = this.node;
-
-
+                
                 global.socket.on(global.const.apply_join_room, this.apply_join_room.bind(this));
 
                 break;

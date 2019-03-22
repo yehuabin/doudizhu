@@ -504,11 +504,11 @@ cc.Class({
                         return;
                     }
 
-                    // if (!rules.isValid(selectedCards)) {
-                    //     //出牌不符合规则
-                    //     this.showMessage(global.const.not_match_rule);
-                    //     return;
-                    // }
+                    if (!rules.isValid(selectedCards)) {
+                        //出牌不符合规则
+                        this.showMessage(global.const.not_match_rule);
+                        return;
+                    }
 
                     //出牌前先跟桌上的牌比较大小
                     if (this.deskTurn && this.passBtn.active) {
@@ -525,12 +525,26 @@ cc.Class({
                         card.prefab.destroy();
                     }
                     //整理手中的牌
-                    for (let i = 0; i < this.cardList.length; i++) {
+                    let cardsCount=this.cardList.length;
+                    let x=cardsCount>40?40:cardsCount;
+                    let scale=(40-x)*0.012+0.5;
+                    let xOffSet=x>15?(40-x)*10 :400+(15-x)*2;
+                    if(x<10&x>5){
+                        xOffSet+=100;
+                    }
+                    else if(x<=5){
+                        xOffSet+=200;
+                    }
+                    
+                    for (let i = 0; i < cardsCount; i++) {
                         var cardPre = this.cardList[i].prefab;
                         let moveTo;
                         cardPre.zIndex = i + 1;
-                        moveTo = cc.moveTo(0.1, cc.v2(CARD_X + i * CARD_X_OFFSET, CARD_Y));
+                        cardPre.scale=scale;
+                        moveTo = cc.moveTo(0.1, cc.v2(CARD_X+xOffSet + i * (60*scale), CARD_Y+(40-x)));
                         cardPre.runAction(moveTo);
+                      
+                        
                     }
 
                 }

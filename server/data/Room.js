@@ -6,7 +6,7 @@ var Room = function () {
     // var roomId=""+Math.floor(Math.random()*10)+Math.floor(Math.random()*10)+Math.floor(Math.random()*10)+Math.floor(Math.random()*10);;
     
     this.roomId =ROOM_NO;
-    this.roomId = "111111";
+    //this.roomId = "111111";
     this.seatNos = [[0, 0], [1, 0], [2, 0], [3, 0]];
     this.players = [];
     this.overNo = 0;
