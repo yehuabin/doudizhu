@@ -9,6 +9,7 @@ const global_const={
     sync_room:"sync_room",
     leave_room:"leave_room",
     player_offline:"player_offline",
+    player_talk:"player_talk",
     push_card:"push_card",
     watch_fri:"watch_fri",
     game_over:"game_over",

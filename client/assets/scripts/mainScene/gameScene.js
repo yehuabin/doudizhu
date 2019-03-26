@@ -15,6 +15,7 @@ cc.Class({
         cardPrefab: cc.Prefab,
         readyBtn: cc.Button,
         pushBtn: cc.Node,
+        talkSelectPrefab: cc.Prefab,
         passBtn: cc.Node,
         cardMask: cc.Node,
         messageLabel: cc.Label,
@@ -231,7 +232,7 @@ cc.Class({
             this.pushBtn.active = true;
             this.passBtn.active = false;
         }
-
+        this.showMessage(`${gameInfo[data.startNo ].nickname} 先出牌`);
         this.scrollMsgLabel.string += `${gameInfo[0].nickname} 、 ${gameInfo[2].nickname} 对家\n`;
         this.scrollMsgLabel.string += `${gameInfo[1].nickname} 、 ${gameInfo[3].nickname} 对家\n`;
         //this.displayTimer(data.startNo);
@@ -457,7 +458,11 @@ cc.Class({
         //todo:
         this.readyBtn.node.active = false;
         global.socket.emit(global.const.ready_game);
-
+        //this.talk_selectcc.instantiate(this.talk_select)
+        this.talkSelectPrefab=cc.instantiate(this.talkSelectPrefab);
+        this.talkSelectPrefab.parent=this.node;
+        this.talkSelectPrefab.position=cc.v2(440,-30);
+        this.talkSelectPrefab.active=false;
         global.socket.on(global.const.sync_room, this.sync_room.bind(this));
         global.socket.on(global.const.leave_room, this.leave_room.bind(this));
         global.socket.on(global.const.join_room, this.join_room.bind(this));
@@ -466,9 +471,6 @@ cc.Class({
         global.socket.on(global.const.game_over, this.game_over.bind(this));
         global.socket.on(global.const.push_card, this.push_card.bind(this));
         global.socket.on(global.const.watch_fri, this.watch_fri.bind(this));
-
-
-
 
         this.cardMask.on('touchstart', function (event) {
             this.selectCard(event.getLocation());
@@ -542,9 +544,7 @@ cc.Class({
                         cardPre.zIndex = i + 1;
                         cardPre.scale=scale;
                         moveTo = cc.moveTo(0.1, cc.v2(CARD_X+xOffSet + i * (60*scale), CARD_Y+(40-x)));
-                        cardPre.runAction(moveTo);
-                      
-                        
+                        cardPre.runAction(moveTo);   
                     }
 
                 }
@@ -561,6 +561,10 @@ cc.Class({
                 break;
             case "back":
 
+                // cc.director.loadScene("mainScene");
+                break;
+            case "talk":
+                this.talkSelectPrefab.active=!this.talkSelectPrefab.active;
                 // cc.director.loadScene("mainScene");
                 break;
             default:

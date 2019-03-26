@@ -54,6 +54,13 @@ var tools={
         }
         
       return text;
+    },
+    getConvertSeatNo: function (seatNo) {
+        var seatIndex = seatNo - global.player.seatNo;
+        if (seatIndex < 0) {
+            seatIndex += 4;
+        }
+        return seatIndex;
     }
 };
 module.exports=tools;

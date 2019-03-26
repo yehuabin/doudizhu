@@ -116,6 +116,9 @@ app.on('connection', function (socket) {
 
     socket.on(global_const.sync_room, function () {
         var room = getPlayerRoom();
+        if(!room){
+            return;
+        }
         console.log(`sync_room:` + socket.nickname);
         socket.emit(global_const.sync_room, null, room.players);
 
@@ -127,10 +130,28 @@ app.on('connection', function (socket) {
         });
 
     });
+    socket.on(global_const.player_talk, function (msg) {
+        var room = getPlayerRoom();
+        if(!room){
+            return;
+        }
+        console.log(`${msg.nickname}：${msg.msg}`);
+
+        room.players.forEach(player => {
+            player.getSocket().emit(global_const.player_talk, null,msg);
+        });
+
+    });
     socket.on(global_const.ready_game, function () {
         var room = getPlayerRoom();
+        if(!room){
+            return;
+        }
         console.log(`ready_game:` + socket.nickname);
         var player = room.getPlayer(socket);
+        if(!player){
+            return;
+        }
         player.ready();
 
         room.players.forEach(p => {

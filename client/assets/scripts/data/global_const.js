@@ -11,6 +11,7 @@ const global_const={
     game_over:"game_over",
     watch_fri:"watch_fri",
     player_offline:"player_offline",
+    player_talk:"player_talk",
     pass_card:"pass_card",
     card_shapes:["红桃","梅花","方块","黑桃"],
     card_nos:[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],
