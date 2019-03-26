@@ -106,7 +106,7 @@ cc.Class({
         }
         //桌上牌清空
         //this.pushCardsContainer.removeAllChildren();
-        this.scrollMsgLabel.string = "";
+        
         this.deskLabel.string = "";
         this.deskTurn = null;
 

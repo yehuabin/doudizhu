@@ -1,5 +1,5 @@
-const MESSAGES = ['对家要不要的起', '要不起','直接压死别给套',  '快出牌脑子转快点', '让我来', '和你搭伙一世痛苦', '关公面前耍大刀',
-'炸弹不炸带回家啊','全小炸，炸不动','没炸弹啊','这把我带飞','要不要加分数','有分就加，我来吃', '手抖了，不好意思', '吹个风给我', '放心有风吹', '吹个西北风', '你牌打的真棒',  '出单张', '出对子', '出三个'];
+const MESSAGES = ['对家要不要的起', '要不起','直接压死别给套','放他走',  '快出牌脑子转快点', '让我来', '和你搭伙一世痛苦', '关公面前耍大刀',
+'炸弹不炸带回家啊','全小炸，炸不动','没炸弹','这把我带你飞','要不要加分数','有分就加，我来吃', '手抖了，不好意思',  '你是真会玩',  '出单张', '出对子', '出三个'];
 var tools = require('../utility/tools');
 cc.Class({
     extends: cc.Component,
@@ -13,8 +13,6 @@ cc.Class({
         talk1Prefab: cc.Prefab,
     },
     onMessage(e) {
-        console.log('onMessage');
-        
         let msg = global.player;
         msg.msg = e.getComponent(cc.Label).string;
         global.socket.emit(global.const.player_talk, msg);
@@ -63,8 +61,8 @@ cc.Class({
        e.stopPropagation();
     },
     onLoad() {
-        this.hide_bg.on(cc.Node.EventType.MOUSE_DOWN,this.hide,this);
-        this.talk_select.on(cc.Node.EventType.MOUSE_DOWN,this.stop,this);
+        this.hide_bg.on(cc.Node.EventType.TOUCH_START,this.hide,this);
+        this.talk_select.on(cc.Node.EventType.TOUCH_START,this.stop,this);
     
         for (let i = 0; i < MESSAGES.length; i++) {
             const msg = MESSAGES[i];
