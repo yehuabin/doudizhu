@@ -128,9 +128,6 @@ cc.Class({
             for (let j = 0; j < turn.gameInfo.length; j++) {
                 const gameInfo = turn.gameInfo[j];
                 if (this.getConvertSeatNo(gameInfo.seatNo) == player.seatNo) {
-                    if (player.score != gameInfo.score) {
-                        this.scrollMsgLabel.string += `${gameInfo.nickname} 吃${gameInfo.score - player.score}分\n`;
-                    }
                     player.setGameInfo(turn.gameInfo[j]);
 
                 }
@@ -232,7 +229,8 @@ cc.Class({
             this.pushBtn.active = true;
             this.passBtn.active = false;
         }
-        this.showMessage(`${gameInfo[data.startNo ].nickname} 先出牌`);
+        let pushContainer = this.getPushContainer(data.startNo);
+        pushContainer.addChild(this.initLable("出牌中..."));
         this.scrollMsgLabel.string += `${gameInfo[0].nickname} 、 ${gameInfo[2].nickname} 对家\n`;
         this.scrollMsgLabel.string += `${gameInfo[1].nickname} 、 ${gameInfo[3].nickname} 对家\n`;
         //this.displayTimer(data.startNo);
@@ -461,8 +459,7 @@ cc.Class({
         //this.talk_selectcc.instantiate(this.talk_select)
         this.talkSelectPrefab=cc.instantiate(this.talkSelectPrefab);
         this.talkSelectPrefab.parent=this.node;
-        this.talkSelectPrefab.position=cc.v2(440,-30);
-        this.talkSelectPrefab.active=false;
+        this.talkSelectPrefab.position=cc.v2(420,-100);
         global.socket.on(global.const.sync_room, this.sync_room.bind(this));
         global.socket.on(global.const.leave_room, this.leave_room.bind(this));
         global.socket.on(global.const.join_room, this.join_room.bind(this));
@@ -506,11 +503,11 @@ cc.Class({
                         return;
                     }
 
-                    if (!rules.isValid(selectedCards)) {
-                        //出牌不符合规则
-                        this.showMessage(global.const.not_match_rule);
-                        return;
-                    }
+                    // if (!rules.isValid(selectedCards)) {
+                    //     //出牌不符合规则
+                    //     this.showMessage(global.const.not_match_rule);
+                    //     return;
+                    // }
 
                     //出牌前先跟桌上的牌比较大小
                     if (this.deskTurn && this.passBtn.active) {
@@ -561,10 +558,6 @@ cc.Class({
                 break;
             case "back":
 
-                // cc.director.loadScene("mainScene");
-                break;
-            case "talk":
-                this.talkSelectPrefab.active=!this.talkSelectPrefab.active;
                 // cc.director.loadScene("mainScene");
                 break;
             default:
