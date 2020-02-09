@@ -1,5 +1,6 @@
 var socket = require('../controller/socketController');
 var global_const = require('../data/global_const');
+var tools = require('../utility/tools');
 global.socket = socket;
 global.const = global_const;
 cc.Class({
@@ -59,7 +60,7 @@ cc.Class({
 
     },
     onClick: function (event, customData) {
-
+        tools.play_ui_click();
         //console.log('custom data =  ' + customData);
         switch (customData) {
             case global.const.create_room:
@@ -70,8 +71,8 @@ cc.Class({
                 break;
             case global.const.apply_join_room:
 
-                global.socket.emit(global.const.apply_join_room, { roomId:"111111", nickname: global.player.nickname,
-                uuid:global.player.uuid });
+                // global.socket.emit(global.const.apply_join_room, { roomId:"111111", nickname: global.player.nickname,
+                // uuid:global.player.uuid });
 
                 this.inputRoomNo = cc.instantiate(this.inputRoomNoPrefab);
                 this.inputRoomNo.parent = this.node;

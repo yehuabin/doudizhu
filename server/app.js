@@ -4,16 +4,15 @@ var Room = require('./data/Room');
 var Player = require('./data/Player');
 var Card = require('./data/Card');
 var tools = require('./utility/tools');
-var rules = require('./utility/rules');
 var roomList = [];
 var playerList = [];
-
-const app = socket('3000', { wsEngine: 'ws' });
+let port=3000;
+const app = socket(port, { wsEngine: 'ws' });
 
 app.on('connection', function (socket) {
     playerList.push(socket);
     
-    console.log(` connection players : ${playerList.length} , rooms : ${roomList.length}`);
+    //console.log(` connection players : ${playerList.length} , rooms : ${roomList.length}`);
     //     socket.on("login",function(user){
     //         console.log("login success");
     //         console.log("----"+user);
@@ -135,7 +134,6 @@ app.on('connection', function (socket) {
         if(!room){
             return;
         }
-        console.log(`${msg.nickname}：${msg.msg}`);
 
         room.players.forEach(player => {
             player.getSocket().emit(global_const.player_talk, null,msg);
@@ -264,6 +262,7 @@ app.on('connection', function (socket) {
 
     socket.on(global_const.push_card, function (turn) {
         var room = getPlayerRoom();
+        if(!room) return;
         room.pushCard(turn,socket);
     });
 
@@ -313,8 +312,8 @@ app.on('connection', function (socket) {
         }
 
         tools.splice(playerList, socket);
-        console.log(` disconnect  players : ${playerList.length} , rooms : ${roomList.length}`);
+       // console.log(` disconnect  players : ${playerList.length} , rooms : ${roomList.length}`);
     });
 
 });
-console.log('listen on 3000');
+console.log('listen on '+port);

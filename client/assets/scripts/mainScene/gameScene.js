@@ -69,13 +69,18 @@ cc.Class({
         }
 
     },
-    initLable(str){
+    audio(url) {
+        var audio = document.createElement('audio');
+        audio.src = cc.url.raw('resources/audio/' + url);
+        audio.play();
+    },
+    initLable(str) {
         var node = new cc.Node("node");
-        node.color=cc.color(255 ,228 ,181);
+        node.color = cc.color(255, 228, 181);
         node.position = cc.v2(0, 0);
         var label = node.addComponent(cc.Label);
         label.string = str;
-        label.fontSize=25;
+        label.fontSize = 25;
         return node;
     },
     showMessage: function (msg) {
@@ -106,7 +111,7 @@ cc.Class({
         }
         //桌上牌清空
         //this.pushCardsContainer.removeAllChildren();
-        
+
         this.deskLabel.string = "";
         this.deskTurn = null;
 
@@ -205,7 +210,7 @@ cc.Class({
         playerNode.prefab.destroy();
         this.playerNodes.splice(this.playerNodes.indexOf(playerNode), 1);
 
-        if(data.offLine){
+        if (data.offLine) {
             this.showMessage(`${data.nickname}断线，请重新开始`);
             this.init();
             this.readyBtn.node.active = true;
@@ -219,6 +224,7 @@ cc.Class({
             return;
         }
         this.init();
+        tools.play("start.mp3");
         console.log("start_game ");
         var cards = data.cards;
         let gameInfo = data.gameInfo;
@@ -269,6 +275,7 @@ cc.Class({
         }
     },
     game_over: function (gameInfo) {
+        tools.play("end.mp3");
         let msg = "";
         //判断是否双扣
         if (gameInfo[0].overNo == 0 && gameInfo[2].overNo == 0) {
@@ -337,12 +344,48 @@ cc.Class({
         }
         return pushContainer;
     },
+    play_push_card_audio(turn) {
+        if (turn.pass) {
+            this.audio(`buyao0.mp3`);
+        }
+        else {
+            let length = turn.cards.length;
+
+            if(length>=5&&length<=8&&! rules.isTHS(turn.cards)){
+                this.audio(`pai/xian_${length}.mp3`);
+            }
+            else if(length==2&&turn.cards[0].no==14){
+                this.audio(`bomb_4_5.mp3`);
+            }
+            else if(length==2&&turn.cards[0].no==15){
+                this.audio(`bomb_10_12.mp3`);
+            }
+            else if(length==3&&turn.cards[0].no==15){
+                this.audio(`bomb_8_9.mp3`);
+            }
+            else if(length==3&&turn.cards[0].no==15){
+                this.audio(`bomb_6_7.mp3`);
+            }
+            else if (rules.isSX(turn.cards) || rules.isTHS(turn.cards)) {
+                this.audio(`bomb1.mp3`);
+            }
+            else {
+                if (length == 1 ||
+                    (length > 1 && turn.cards[0].no == turn.cards[1].no)
+                ) {
+                    this.audio(`pai/${length}_${turn.cards[0].no}.mp3`);
+                }
+            }
+        }
+    },
     push_card: function (err, turn) {
         if (err) {
             console.log(err);
             this.showMessage(err);
             return;
         }
+
+        this.play_push_card_audio(turn);
 
         this.deskTurn = turn.deskTurn;
         let curPlayer = turn.gameInfo[global.player.seatNo];//当前界面用户
@@ -352,11 +395,11 @@ cc.Class({
 
 
         if (turn.deskTurn) {
-           
+
             if (turn.isJiefeng) {
                 let goPlayer = turn.gameInfo[(turn.seatNo + 2) % 4];
                 this.scrollMsgLabel.string += `${goPlayer.nickname} 第${goPlayer.overNo}家，${turnPlayer.nickname} 接风\n`;
-                this.showMessage( `${turnPlayer.nickname} 接风\n`);
+                this.showMessage(`${turnPlayer.nickname} 接风\n`);
             }
 
             if (turn.deskTurn.score > 0) {
@@ -369,8 +412,8 @@ cc.Class({
             else {
                 this.deskLabel.string = "";
             }
-            if(turn.deskTurn.overNo>0&&turn.preSeatNo==turn.deskTurn.seatNo){
-                this.showMessage( `${turn.deskTurn.nickname} 第${turn.deskTurn.overNo}家`);
+            if (turn.deskTurn.overNo > 0 && turn.preSeatNo == turn.deskTurn.seatNo) {
+                this.showMessage(`${turn.deskTurn.nickname} 第${turn.deskTurn.overNo}家`);
             }
         }
         if (turn.seatNo == global.player.seatNo && !turn.isGameOver) {
@@ -394,7 +437,7 @@ cc.Class({
         waitContainer.removeAllChildren();
 
         waitContainer.addChild(this.initLable("出牌中..."))
-        if(nextPlayer.overNo>0){
+        if (nextPlayer.overNo > 0) {
             //一圈轮完显示下家是第几家
             let overNoContainer = this.getPushContainer(nextPlayer.seatNo);
             overNoContainer.removeAllChildren();
@@ -405,7 +448,9 @@ cc.Class({
             pushContainer.addChild(this.initLable("不出"));
         }
         else {
-            for (let i = 0; i < turn.cards.length; i++) {
+            let length = turn.cards.length;
+
+            for (let i = 0; i < length; i++) {
                 var cardPre = cc.instantiate(this.cardPrefab);
                 cardPre.position = cc.v2(CARD_X_OFFSET * i, 0);
                 cardPre.parent = pushContainer;
@@ -413,9 +458,6 @@ cc.Class({
 
             }
         }
-
-
-
 
         if (curPlayer.overNo > 0) {
             //已经逃走处于观看模式
@@ -457,9 +499,9 @@ cc.Class({
         this.readyBtn.node.active = false;
         global.socket.emit(global.const.ready_game);
         //this.talk_selectcc.instantiate(this.talk_select)
-        this.talkSelectPrefab=cc.instantiate(this.talkSelectPrefab);
-        this.talkSelectPrefab.parent=this.node;
-        this.talkSelectPrefab.position=cc.v2(420,-100);
+        this.talkSelectPrefab = cc.instantiate(this.talkSelectPrefab);
+        this.talkSelectPrefab.parent = this.node;
+        this.talkSelectPrefab.position = cc.v2(420, -90);
         global.socket.on(global.const.sync_room, this.sync_room.bind(this));
         global.socket.on(global.const.leave_room, this.leave_room.bind(this));
         global.socket.on(global.const.join_room, this.join_room.bind(this));
@@ -503,11 +545,11 @@ cc.Class({
                         return;
                     }
 
-                    // if (!rules.isValid(selectedCards)) {
-                    //     //出牌不符合规则
-                    //     this.showMessage(global.const.not_match_rule);
-                    //     return;
-                    // }
+                    if (!rules.isValid(selectedCards)) {
+                        //出牌不符合规则
+                        this.showMessage(global.const.not_match_rule);
+                        return;
+                    }
 
                     //出牌前先跟桌上的牌比较大小
                     if (this.deskTurn && this.passBtn.active) {
@@ -524,29 +566,30 @@ cc.Class({
                         card.prefab.destroy();
                     }
                     //整理手中的牌
-                    let cardsCount=this.cardList.length;
-                    let x=cardsCount>40?40:cardsCount;
-                    let scale=(40-x)*0.012+0.5;
-                    let xOffSet=x>15?(40-x)*10 :400+(15-x)*2;
-                    if(x<10&x>5){
-                        xOffSet+=100;
+                    let cardsCount = this.cardList.length;
+                    let x = cardsCount > 40 ? 40 : cardsCount;
+                    let scale = (40 - x) * 0.012 + 0.5;
+                    let xOffSet = x > 15 ? (40 - x) * 10 : 400 + (15 - x) * 2;
+                    if (x < 10 & x > 5) {
+                        xOffSet += 100;
                     }
-                    else if(x<=5){
-                        xOffSet+=200;
+                    else if (x <= 5) {
+                        xOffSet += 200;
                     }
-                    
+
                     for (let i = 0; i < cardsCount; i++) {
                         var cardPre = this.cardList[i].prefab;
                         let moveTo;
                         cardPre.zIndex = i + 1;
-                        cardPre.scale=scale;
-                        moveTo = cc.moveTo(0.1, cc.v2(CARD_X+xOffSet + i * (60*scale), CARD_Y+(40-x)));
-                        cardPre.runAction(moveTo);   
+                        cardPre.scale = scale;
+                        moveTo = cc.moveTo(0.1, cc.v2(CARD_X + xOffSet + i * (60 * scale), CARD_Y + (40 - x)));
+                        cardPre.runAction(moveTo);
                     }
 
                 }
                 else {
                     turn.pass = true;
+                    // this.bottom.removeAllChildren();
                 }
                 this.pushBtn.active = false;
                 this.passBtn.active = false;

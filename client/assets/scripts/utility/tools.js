@@ -61,6 +61,14 @@ var tools={
             seatIndex += 4;
         }
         return seatIndex;
-    }
+    },
+    play(url) {
+        var audio = document.createElement('audio');
+        audio.src = cc.url.raw('resources/audio/' + url);
+        audio.play();
+    },
+    play_ui_click() {
+        this.play('ui_click.mp3');
+    },
 };
 module.exports=tools;
