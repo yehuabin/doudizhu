@@ -15,6 +15,6 @@
   },
   "homepage": "https://github.com/yehuabin/doudizhu#readme",
   "dependencies": {
-    "socket.io": "^2.0.4"
+    "socket.io": "^2.4.0"
   }
 }
